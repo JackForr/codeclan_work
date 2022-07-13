@@ -1,0 +1,168 @@
+---
+title: "session 2 - missing values"
+output: html_document
+date: '2022-07-13'
+---
+
+```{r}
+library(CodeClanData)
+comms_data
+comms_data <- clean_names(comms_data)
+```
+#dropping NAs (loses a lot of data)
+```{r}
+comms_data %>% 
+  drop_na()
+```
+#Imputation - replacing NAs with something (sensible like mean etc)
+
+```{r}
+comms_data %>% 
+  pull(monthly_charges) %>% 
+  mean(na.rm = TRUE)
+```
+```{r}
+comms_data %>% 
+  pull(monthly_charges) %>% 
+  median(na.rm = TRUE)
+```
+
+```{r}
+comms_data %>% 
+  pull(monthly_charges) %>% 
+  range(na.rm = TRUE)
+```
+
+```{r}
+min_charge <- comms_data %>% 
+  pull(monthly_charges) %>% 
+  min(na.rm = TRUE)
+```
+
+```{r}
+max_charge <- comms_data %>% 
+  pull(monthly_charges) %>% 
+  max(na.rm = TRUE)
+```
+
+```{r}
+max_charge - min_charge
+```
+```{r}
+summary(comms_data)
+```
+
+#Leaving NAs
+
+```{r}
+is.na(1)
+is.na(NA)
+```
+
+```{r}
+comms_data
+```
+```{r}
+comms_data 
+  comms_data %>% 
+  filter(is.na(monthly_charges))
+```
+```{r}
+comms_data 
+  pull(monthly_charges)%>% 
+  is.na() %>% 
+  mean()
+```
+
+#Imputation
+
+```{r}
+comms_data_imputed_median <- comms_data %>% 
+  mutate(monthly_charges)
+  
+```
+
+```{r}
+comms_data %>% 
+  (monthly_charges) %>% 
+  mutate(monthly_charges2 = coalesce(monthly_charges,
+                                     median(monthly_charges, na.rm = TRUE)))
+           
+```
+
+```{r}
+comms_data %>% 
+  (monthly_charges) %>% 
+  mutate(monthly_charges2 = coalesce(monthly_charges,
+                                     mean(monthly_charges, na.rm = TRUE)))
+```
+
+```{r}
+library(tidyverse)
+library(janitor)
+```
+
+```{r}
+comms_data
+```
+
+```{r}
+comms_data_imputed_values <- comms_data %>% 
+  mutate(monthly_charges2 = coalesce(monthly_charges,
+                                     median(monthly_charges, na.rm = TRUE)),
+         monthly_charges3 = coalesce(monthly_charges,
+                                     mean(monthly_charges, na.rm = TRUE)),
+         .after = monthly_charges)
+```
+
+```{r}
+ggplot(comms_data_imputed_values, aes(customer_id, monthly_charges2)) + 
+  geom_point()
+
+ggplot(comms_data_imputed_values, aes(customer_id), monthly_charges3)) + 
+  geom_point()
+```
+
+# Non-standard missing values
+
+```{r}
+comms_data %>% 
+  pull(payment_method) %>% 
+  is.na() %>%
+  sum()
+```
+```{r}
+comms_data %>% 
+  pull(total_charges) %>% 
+  is.na() %>%
+  sum()
+```
+
+`NA`
+`--`
+`na`
+`N/A`
+
+```{r}
+comms_data %>% 
+  filter(is.na(total_charges) 
+ 
+  
+```
+#changing various types of missing values to NA
+```{r}
+comms_data_imputed_values %>% 
+  mutate(total_charges = na_if(total_charges, "na"),
+         total_charges = na_if(total_charges, "N/A"))
+```
+```{r}
+comms_data_cleaned <- comms_data_imputed_values %>% 
+  mutate(total_charges = na_if(total_charges, "na"),
+         total_charges = na_if(total_charges, "N/A"),
+         payment_method = na_if(payment_method, '--'),
+         payment_method = coalesce(payment_method, 'unknown'))
+```
+
+
+
+

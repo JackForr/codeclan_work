@@ -1,0 +1,74 @@
+---
+title: "Session 1 - cleaning data"
+output: html_notebook
+---
+
+```{r}
+```
+
+
+```{r}
+devtools::install_github('codeclan/CodeClanData)
+```
+
+
+```{r}
+```in
+```{r}
+library(tidyverse)
+library(janitor)
+```
+```{r}
+janitor::clean_names()
+```
+librarytidyverse
+```{r}
+library(tidyverse)
+```
+```{r}
+library(janitor)
+```
+```{r}
+janitor::clean_names()
+```
+```{r}
+library(tidyverse)
+```video_games <- read_csv("data/steam-200k-sample.csv"
+
+
+
+```{r}
+```
+```{r}
+video_games <- read_csv("data/steam-200k-sample.csv")
+```
+```{r}
+video_games <- read_csv("data/steam-200k-sample.csv")
+```
+```{r}
+video_games <- read_csv("steam-200k-sample.csv", skip = 4)
+```
+```{r}
+video_games <- read_csv("steam-200k-sample.csv", 
+                        skip = 4,
+                        col_types = cols(`bought online` = col_logical()))
+
+```
+```{r}
+read_csv("steam-200k-sample.csv", skip = 4) %>%
+  mutate(`bought online` = as.logical(`bought online`))
+```
+
+```{r}
+video_games_janitor_clean <- video_games %>% 
+  clean_names()
+
+video_games_janitor_clean
+```
+```{r}
+video_games_janitor_clean %>% 
+  rename('game_title' = 'game_name',
+         'activity' = 'what',
+         'playing_hours' = 'value')
+```
+
