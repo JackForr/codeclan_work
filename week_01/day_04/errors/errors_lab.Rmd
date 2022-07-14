@@ -1,0 +1,96 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(dplyr)
+library(tidyverse)
+```
+
+
+#error 1
+```{r}
+some_letters <- c("E", "R", "R", "O", "R")
+```
+
+#error 2
+```{r}
+message <- c("does", "this", "work", "?")
+```
+
+#error 3
+```{r}
+mtcars %>% 
+  dplyr::select(mpg, cyl, disp) %>%
+  filter(mpg < 20)
+```
+
+#error 4
+
+```{r}
+iris %>% 
+  dplyr::select(Sepal.Width, Sepal.Length, Species) %>% 
+  dplyr::arrange(Sepal.Length)
+```
+
+#error 5
+```{r}
+ToothGrowth %>%
+  filter(supp == "VC") %>% 
+  summarise(avg_len_vc = mean(len))
+  
+```
+
+#error 6
+```{r}
+animals <- c("cat", "dog", "rabbit", "horse")
+sample(animals, 10, replace = TRUE)
+```
+
+#error_7
+```{r}
+dog_names <- c("Lucy", "Molly", "Charlie", "Luna", "Bella", "Cooper")
+
+cat_names <- c("Luna", "Lily", "Lucy", "Charlie", "Max", "Oliver")
+
+intersect(dog_names, cat_names)
+```
+
+#error 8
+```{r}
+chickwts %>% 
+  filter(weight <= 150) %>% 
+  mutate(weight_kg = weight * 0.001)
+```
+
+#error 9
+```{r}
+tibble(alphabet = LETTERS,
+       numbers = 1:26) %>% 
+  filter(LETTERS != c("A", "B", "C"))
+```
+
+#error 10
+```{r}
+set.seed(999)
+
+scent_ratings <- tibble(
+  iD = rep(1:10, each = 5),
+  SCENT = rep(c("New book", "Cut grass", "Rose oil", "Fresh linen", "Wet dog"), 10),
+  rating = sample(c(0:5, NA), 50, replace = TRUE),
+  PersonAge = rep(NA, 50)
+)
+```
+
+
+```{r}
+scent_ratings <- janitor::clean_names(scent_ratings)
+```
+
+```{r}
+scent_ratings %>% 
+  drop_na(rating)%>% 
+  group_by(scent) %>% 
+  summarise(avg_rating = mean(rating))
+```
+
