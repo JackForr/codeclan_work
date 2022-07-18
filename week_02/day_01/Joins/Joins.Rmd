@@ -1,0 +1,152 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+```
+```{r}
+customers <- tibble(
+  customer_ID = c(001, 002, 004, 005, 008, 010), 
+  name = c("John Smith", "Jane Adams", "Robert Landry", "Jane Tow", "Raul Tann", "Hilary Joyal"),
+  email_address = c("johnsmith@gmail.com", "janea@gmail.com", "rlabdry@hotmail.com", "janet89@aol.com", "paul.tann1@gmail.com", NA),
+  shipping_address = c("32 Station Road, Edinburgh", "42 Park Drive, Edinburgh", NA, "10 Gardiner Rd, Edinburgh", "12 Main St, Edinburgh", " 234 Queensferry Rd, Edinburgh,")
+)
+
+customers
+```
+
+```{r}
+orders <- tibble(
+  customer_ID = c(001, 002, 005, 010, 012, 001), 
+  order_number = c("KU65781", "SU98201", "JS76821", "YR28212", "JS91221","YR21873"),
+  order_total = c("£32.50", "£56.00", "£100.02", "£20.25", "£39.50", "£45.00"),
+  product_code = c("XZY780", "XYZ123", "XYZ256", "XYZ262", "XYZ345", "XYZ127")
+)
+
+orders 
+```
+```{r}
+inner_join(customers, orders, "customer_ID")
+```
+```{r}
+left_join(customers, orders, "customer_ID")
+```
+```{r}
+right_join(customers, orders, "customer_ID")
+```
+```{r}
+full_join(customers, orders, "customer_ID")
+```
+```{r}
+customers_adj <- rename(customers, ID = customer_ID)
+```
+```{r}
+inner_join(customers_adj, orders, by = c("ID" = "customer_ID"))
+```
+```{r}
+customers2 <- customers %>% 
+  mutate(payment_type = c("card", "cash", "cash", "card", "card", "card"))
+
+orders2 <- orders %>% 
+  mutate(payment_type = c("card", "cash", "cash", "card", "card", "card"))
+```
+
+```{r}
+inner_join(customers2, orders2, by = c("customer_ID", "payment_type"))
+```
+```{r}
+semi_join(customers, orders, "customer_ID")
+```
+```{r}
+anti_join(customers, orders, "customer_ID")
+```
+
+```{r}
+statuses <- tibble(
+  status = c("active", "active", "inactive", "inactive", "active", "inactive")
+) 
+```
+```{r}
+bind_cols(customers, statuses)
+```
+```{r}
+past_customers <- tibble(
+  customer_ID = c(020, 021), 
+  name = c("Dave Brown", "Jess Bishop"),
+  email_address = c("dbrown@hotmail.com", "jessb@gmail.com"),
+  address = c("57 Park View, Leith", "12 Reid Way, Broxburn")
+)
+```
+
+```{r}
+bind_rows(customers, past_customers)
+```
+
+#Mini Lab
+```{r}
+movies <- read_csv("data/movies.csv")
+actors <- read_csv("data/actors.csv")
+roles <- read_csv("data/roles.csv")
+```
+#Q2
+id is primary and foreign for actor
+role is primary for roles and if foreign
+one to one
+one to many
+many to many
+
+#Q1.2.1
+192017
+```{r}
+movies %>% 
+  filter(name == "Little Mermaid, The")
+```
+#Q1.2.2
+```{r}
+little_mermaid_roles <- filter(roles, movie_id == 192017 )
+```
+
+#Q1.2.3
+```{r}
+left_join(little_mermaid_roles, actors, by = c("actor_id" = "id"))
+```
+
+#Q1.2.4
+```{r}
+inner_join(little_mermaid_roles, actors, by = c("actor_id" = "id"))
+```
+
+#Q1.3.1
+```{r}
+actors_more_than_once <- actors %>% 
+  filter(film_count >= 2)
+```
+#Q1.3.2
+```{r}
+left_join(actors_more_than_once, roles, by = c("id" = "actor_id" ))
+```
+#Q1.3.3
+```{r}
+actors_more_than_once %>% 
+  left_join(roles, by = c("id" = "actor_id")) %>% 
+  left_join(movies, by = c("movie_id" ="id"))
+
+#or
+
+roles_of_frequent_actors <- left_join (actors_more_than_once, roles, 
+                                       by = c("id" = "actor_id"))
+
+left_join(roles_of_frequent_actors, movies, by = c("movie_id" = "id"))
+```
+#Q1.3.4
+```{r}
+actors_more_than_once %>% 
+  left_join(roles, by = c("id" = "actor_id")) %>% 
+  left_join(movies, by = c("movie_id" ="id")) %>% 
+  mutate(rank = as.numeric(rank)) %>% 
+  group_by(first_name, last_name) %>% 
+  summarise(avg_rank = mean(rank, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  slice_max(avg_rank, n = 5)
+```
