@@ -1,0 +1,200 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+single <- 'this is a single string'
+double <- "this is a double string"
+```
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+employees <- tibble(
+  first_name = c("Sally", "steven", "Mary", "John"),
+  last_name = c("Smith", "hasTings", "Milne", "Davidson"),
+  postcode = c("EH10 6GH", "EH3 7HL", "G1 7FR", NA), 
+  location = c(" ", "Edinburgh", "", "Stirling")
+)
+
+employees
+```
+```{r}
+employees %>% 
+  group_by(location) %>% 
+  summarise(n())
+```
+
+```{r}
+mary_location <- employees %>% 
+  filter(first_name == "Mary") %>% 
+  select(location) %>% 
+  pull()
+
+sally_location <- employees %>% 
+  filter(first_name == "Sally") %>% 
+  select(location) %>% 
+  pull()
+``` 
+
+```{r}
+mary_location == sally_location
+```
+
+```{r}
+employees %>% 
+  summarise(nchar(location))
+```
+```{r}
+str_c("This", "is", "some", "text", sep = " ")
+```
+
+```{r}
+employees %>% 
+  mutate(full_name = paste(first_name, last_name, sep = " "),
+         .after = last_name)
+```
+```{r}
+pangram <- "The quick brown fox jumps over the lazy dog"
+```
+
+```{r}
+pangram %>% 
+  str_to_upper()
+```
+
+```{r}
+pangram %>% 
+  str_to_lower()
+```
+
+```{r}
+pangram %>% 
+  str_to_title()
+```
+```{r}
+pangram %>% 
+  str_to_sentence()
+```
+
+```{r}
+employees %>% 
+  select(first_name, last_name) %>% 
+  mutate(first_name_fix = str_to_title(first_name),
+         last_name_fix = str_to_title(last_name))
+```
+```{r}
+unbroken_string <- "We're going to break up this string."
+```
+
+```{r}
+unbroken_string %>% 
+  str_split(" ") %>% 
+  flatten_chr()
+```
+
+```{r}
+employees %>% 
+  mutate(new_postcode = str_split(postcode, " ")) %>% 
+  unnest(new_postcode)
+```
+```{r}
+employees %>% 
+  separate_rows(postcode, sep = " ")
+```
+```{r}
+employees %>% 
+  separate(postcode, c("postcode_outer", "postcode_inner"), " ")
+```
+
+#Task - 10 mins
+#Concatenate the strings "Manipulating" "strings" "is" "fun!"
+#Capitalise the result and save it in a new variable
+#Split the formatted string into individual characters
+
+```{r}
+maniplutaing_strings <- "Manipulating strings is fun!"
+```
+
+```{r}
+capitalised_strings <- str_to_upper(maniplutaing_strings) %>% 
+  str_split("") %>% 
+flatten_chr()
+```
+
+
+```{r}
+full_string <- "Let's grab a substring from this!"
+```
+
+```{r}
+full_string %>% 
+  str_sub(start = 6)
+```
+
+```{r}
+full_string %>% 
+  str_sub(-5, -1)
+```
+```{r}
+employees %>% 
+  mutate(postcode_inner = str_sub(postcode, -3), 
+         postcode_outer = str_sub(postcode, 1, -4))
+```
+```{r}
+string <- "We're going to replace some words."
+```
+```{r}
+str_sub(string, 1, 22) <- "I've changed"
+```
+
+```{r}
+string
+```
+
+```{r}
+numbers <- 1233456.789
+```
+
+```{r}
+numbers %>% 
+  format(nsmall = 1, decimal.mark = ",")
+```
+
+```{r}
+numbers %>% 
+  format(big.mark = ",", big.interval = 3)
+```
+#Upcase the text in the playlist_name column. Overwrite the existing column to store the result.
+
+#Lowcase the text in the track_artist column. Store the result in a new column called track_artist_lowcase.
+
+#Take the first 5 characters of the playlist_id column, and save it in a new column called playlist_start.
+
+#Take the first 4 characters of the track_album_release_date column and save it in a new column called year.
+
+
+#What else can you do to this dataset to practice? Can you work with the numbers? This is open ended - have fun!
+
+
+```{r}
+spotify <- read_csv("data/spotify_sample.csv")
+```
+```{r}
+spotify %>% 
+  mutate(playlist_name = str_to_upper(playlist_name))
+```
+```{r}
+spotify %>% 
+  mutate(track_artist_lower = str_to_lower(track_artist))
+```
+```{r}
+spotify %>% 
+  mutate(playlist_start = str_sub(playlist_id, 1, 5))
+```
+```{r}
+spotify %>% 
+  mutate(year = str_sub(track_album_release_date, 1, 4))
+```
