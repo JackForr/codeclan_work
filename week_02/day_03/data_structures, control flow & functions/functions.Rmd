@@ -1,0 +1,92 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+nchar(x, type = "chars", allowNA = FALSE, keepNA = NA)
+```
+
+```{r}
+nchar("hello", "chars", TRUE, NA)
+```
+```{r}
+nchar("hello", allowNA = TRUE)
+```
+
+###writing functions
+
+```{r}
+function_name <- function(par_1, par_2 = NULL, par_3 = "default value"){
+  #stuff to do 
+  
+  #the last thing thats done will be the return value 
+  return(value)
+}
+```
+
+```{r}
+multiply_by_5 <- function(x){
+  x * 5
+}
+multiply_by_5(2)
+```
+
+```{r}
+multiply_by <- function(x, y){
+  z <- x * y
+  z
+}
+
+multiply_by(2, 10)
+```
+
+```{r}
+multiply_by <- function(x, y = 3){
+  z <- x * y
+  z
+}
+multiply_by(x = 2)
+```
+
+```{r}
+make_price <- function(x){
+  paste0("£", x)
+}
+
+make_price(100)
+```
+
+###scope
+
+```{r}
+n <- 8
+multiply_by_n <- function(x)
+  x * n
+multiply_by_n(2)
+```
+
+
+
+```{r}
+n <- 8
+multiply_by_n <- function(x, n)
+  x * n
+multiply_by_n(2, 9)
+```
+
+```{r}
+multiply_by_n <- function(x, n){
+  ans <- x * n
+    if(ans %% 2 == 1){
+      z <- (paste("x is odd"))
+    } else {
+    z <- (paste("x is even"))
+  }
+ z
+}
+multiply_by_n(3, 3)
+```
+
+### best practice
+
+name with verbs 

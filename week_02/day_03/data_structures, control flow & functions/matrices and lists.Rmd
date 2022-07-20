@@ -1,0 +1,95 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+```
+
+```{r}
+x <- list(1, "a", TRUE, c(1, 2, 3))
+```
+
+```{r}
+v <- 1:5
+```
+
+```{r}
+c(1, "a", TRUE, c(1, 2, 3))
+as.list(v)
+x
+```
+#subsetting
+
+```{r}
+x[[2]]
+x[2]
+```
+#named list
+```{r}
+named_list <- list(a = "i love R", b = 1:10)
+
+str(named_list)
+
+named_list$a
+named_list$b
+
+names(named_list)
+```
+#nested list
+```{r}
+student_info <- list(
+                "Agnes" = list(height = 1.8, shoe_size = 8L),
+                "Bobby" = list(height = 2.1, gender = "Male"),
+                "Charlie" = list(gender = "Female", likes_beets = TRUE)
+)
+
+student_info$Agnes$height
+student_info[["Agnes"]][["height"]] #safer 
+```
+
+#task
+```{r}
+named_list <- list(one = c(1, 2, 3), two = c("a", "b", "c"))
+
+named_list[[2]] #vector
+
+named_list[2] #list
+
+named_list$two #vector
+```
+#creating matrices
+```{r}
+m <- matrix(1:12, nrow = 4, byrow = FALSE)
+
+class(m)
+typeof(m)
+```
+#indexing a matrix
+```{r}
+m[2:3, 2]
+m[, 1]
+m[c(1,3), c(1,3)]
+m[c(1,3), -2]
+
+class(m[, 1])
+```
+
+```{r}
+v * 2
+
+m * 2
+```
+
+```{r}
+rowSums(m)
+colSums(m)
+rowMeans(m)
+colMeans(m)
+```
+#task
+```{r}
+task_matrix <- matrix(1:3, 3, 4)
+task_matrix[2, 3]
+colSums(task_matrix)
+```

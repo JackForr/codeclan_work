@@ -1,0 +1,195 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+### "if" statements
+```{r}
+if(this_thing_is_true){
+  #do this thing
+}
+
+if (weather == "sunny"){
+  hang_up_washing()
+}
+```
+
+```{r}
+x <- 10
+y <- 15
+if(x < y){
+  print("yes")
+}
+```
+
+```{r}
+x <- 10
+y <- 5:20
+if(x %in% y){
+  print("yes")
+}
+```
+
+###task
+```{r}
+x <- 4
+if(x %% 2 == 0){
+print("yes that divides by 2")
+}
+```
+
+```{r}
+if(this_thing_is_true){
+  #if true do this thing
+}else {
+  #do this instead if not
+}
+```
+
+```{r}
+x <- 20
+y <- 20
+if(x < y){
+  print("yes")
+}else {
+  print("no")
+}
+```
+
+```{r}
+x <- 5
+y <- 10
+
+if (x %in% c(3, 4, 5)){
+  
+  print("x is in our list")
+  
+  if (x == 5){
+    
+    print("x is exactly 5")
+    
+  }
+  
+} else {
+  
+  print("Start of else statement")
+  
+  if (y %% x == 0){
+    
+    print("x divides y")
+  
+  } else{
+    
+    print("x does not divide Y")
+  }
+  
+  print ("End of else statement")
+  
+}
+```
+
+###Loops
+
+"for" - used when we know how many iterations we need
+  - end after the desured number of loops 
+
+"while" - used when we dont know how many iterations
+loops are useful but can usually be avoided using R
+  end when a condition is met 
+ 
+###for loops 
+ 
+```{r}
+v <- 10:20
+for (item in v) {
+ print(item * 2) 
+}
+```
+  
+```{r}
+weekdays <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday")
+
+for (day in weekdays){
+  phrase <- paste("The day is", day)
+  print(phrase)
+}
+```
+
+###while loops
+
+```{r}
+current_value <- 1
+stop_value <- 10
+
+while (current_value < stop_value) {
+  current_value <- current_value + 1
+  print(current_value)
+}
+
+```
+
+###alternarive ways to index for a loop
+```{r}
+weekdays
+len_weekdays <- length(weekdays)
+
+for (i in 1:len_weekdays) {
+  phrase <- paste("the day is", weekdays[i])
+  print(phrase)
+}
+```
+
+###replacing a vector from a loop
+```{r}
+weekdays <- c("monday", "tuesday", "wednesday", "thursday", "friday")
+len_weekdays <- length(weekdays)
+
+for (i in 1: len_weekdays) {
+  plural <- paste0(weekdays[i], "s")
+  weekdays[i] <- plural
+}
+```
+
+###nested loops
+
+```{r}
+m <- matrix(1:12, 4)
+nrows <- nrow(m)
+ncols <- NCOL(m)
+
+
+for(row_i in 1:nrows){
+  for(col_i in 1:ncols)
+  print(m[row_i, col_i ])
+}
+```
+
+```{r}
+m <- matrix(rnorm(25), 5)
+num_rows <- dim(m)[1]
+num_cols <- dim(m)[2]
+
+
+```
+
+```{r}
+product_matrix <- matrix(nrow = 5, ncol = 5)
+
+for(i in 1:nrow(product_matrix)){
+  for(j in 1:ncol(product_matrix))
+  product_matrix[i,j] <- i*j
+}
+```
+
+```{r}
+example_matrix = matrix(1:25, nrow = 5, ncol = 5)
+example_matrix 
+
+for (row_index in 1:5){
+  for (col_index in 1:5){
+    if (row_index == col_index){ #logical test
+      print(example_matrix[row_index, col_index])
+    }
+   }
+}
+```
+
