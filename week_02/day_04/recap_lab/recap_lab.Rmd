@@ -1,0 +1,75 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+```
+```{r}
+diet_comp <- read_csv("data/dietary-composition-by-country.csv")
+```
+#Question 2
+```{r}
+diet_comp_clean <- diet_comp %>% 
+  pivot_longer(cols = ends_with("))"),
+               names_to = "kcal_source",
+               values_to = "avg_daily_cals")
+```
+#Question 3
+```{r}
+diet_comp_clean %>% 
+  janitor::clean_names() %>% 
+  rename("country" = "entity")
+```
+
+```{r}
+pattern <- "[:punct:][A-Z]{3} [:punct:][0-9]{4}[:punct:][:punct:]"
+
+diet_comp_clean %>%
+  select(kcal_source) %>% 
+  mutate(kcal_source2 = str_replace_all(kcal_source, pattern, ""))
+```
+#Question 4
+```{r}
+diet_comp_clean %>% 
+  summarise(sum(is.na(code)))
+
+diet_comp_clean %>% 
+  summarise(sum(is.na(year)))
+
+diet_comp_clean %>% 
+  summarise(sum(is.na(country)))
+
+diet_comp_clean %>% 
+  summarise(sum(is.na(kcal_source)))
+
+diet_comp_clean %>% 
+  summarise(sum(is.na(avg_daily_cals)))
+```
+#Question 5
+```{r}
+diet_comp_clean %>% 
+  group_by(country) %>% 
+  summarise(sum(is.na(code))) %>% 
+  arrange(by_group = TRUE)
+
+pattern <- "Cabo Verde"
+pattern2 <- "United States of America"
+
+diet_comp_clean %>% 
+  str_extract(pattern)
+
+diet_comp_clean %>% 
+  str_extract(pattern2)
+```
+
+#Question 6
+```{r}
+codes <- read_csv("data/country_codes.csv")
+codes %>% 
+  filter(country == "Cabo Verde")
+```
+
+
+
+
