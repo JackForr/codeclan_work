@@ -1,0 +1,125 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+pets <- read_csv("data/pets.csv")
+```
+```{r}
+pets %>% 
+  ggplot(aes(x = weight, 
+             y = age))+
+  geom_point(colour = "steelblue")
+```
+```{r}
+pets %>% 
+  ggplot(aes(x = weight, 
+             y = age))+
+  geom_point(colour = "#3333cc")
+```
+#colour palettes
+```{r}
+pets %>% 
+  ggplot(aes(x = animal,
+             fill = sex))+
+  geom_bar()
+```
+```{r}
+pets %>% 
+  ggplot(aes(x = age,
+             y = weight,
+             colour = sleep))+
+  geom_point()
+```
+
+#continuous colours - sequential and diverging 
+#sequential
+```{r}
+pets %>% 
+  ggplot(aes(x = age,
+             y = weight,
+             colour = sleep))+
+  geom_point()+
+  scale_colour_gradient(low = "#ffe3e3",
+                        high = "#fa0300")
+```
+#diverging
+```{r}
+pets %>% 
+  ggplot(aes(x = age,
+             y = weight,
+             colour = sleep))+
+  geom_point()+
+  scale_colour_gradient2(low = "blue",
+                         mid = "white",
+                         high = "red",
+                         midpoint = median(pets$sleep))+
+  theme_bw()
+```
+
+#Discrete colours
+```{r}
+students <- read_csv("data/students.csv") %>%
+  mutate(school_year = factor(school_year,
+                              levels = c("Year 7",
+                                         "Year 8",
+                                         "Year 9",
+                                         "Year 10",
+                                         "Year 11",
+                                         "Year 12")))
+```
+```{r}
+students %>% 
+  distinct(superpower) %>% 
+  pull
+
+students %>% 
+  ggplot(aes(x = school_year,
+             fill = superpower))+
+  geom_bar()+
+  scale_fill_manual(values = c("Fly" = "coral",
+                               "Freeze time" = "seagreen",
+                               "Invisibility" = "orange",
+                               "Telepathy" = "red"))
+```
+```{r}
+pets %>% 
+  ggplot(aes(x = weight,
+             y = age, 
+             colour = sleep))+
+  geom_point()+
+  scale_color_distiller(palette = "RdPu")
+```
+
+```{r}
+students %>% 
+  ggplot(aes(x = school_year,
+             fill = superpower))+
+geom_bar()+
+  scale_fill_brewer(palette = "Set1" )
+```
+#themes
+```{r}
+students %>% 
+  ggplot(aes(x = school_year,
+             fill = superpower))+
+geom_bar()+
+  scale_fill_brewer(palette = "Dark2")+
+  theme_minimal()
+```
+```{r}
+students %>% 
+  ggplot(aes(x = school_year,
+             fill = superpower))+
+  geom_bar()+
+  theme(axis.text = element_text(face = "bold"))
+```
+```{r}
+students %>% 
+  ggplot(aes(x = favorite_school_subject))+
+  geom_bar()+
+  coord_flip()
+```
+
+
