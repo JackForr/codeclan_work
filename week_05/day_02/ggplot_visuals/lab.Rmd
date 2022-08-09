@@ -1,0 +1,84 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+install.packages("ggrepel")
+library(ggrepel)
+```
+
+
+#3.1 comparison
+```{r}
+late_deliveries <- CodeClanData::late_deliveries
+recovery_times <- CodeClanData::recovery_times
+fitness_levels <- CodeClanData::fitness_levels
+
+late_deliveries %>% 
+  ggplot(aes(x = date,
+             y = late_deliveries))+
+  geom_line()+
+  labs(title = "Late Deliveries",
+       y = "Late Deliveries",
+       x = "Date")+
+  theme_light()
+
+recovery_times %>% 
+  ggplot(aes(x = treatment_group,
+             y = recovery,
+             fill = treatment_group))+
+           geom_col()+
+  facet_wrap(~ prognosis)+
+  theme_light()
+
+
+
+fitness_levels %>% 
+  ggplot(aes(x = age,
+             y = fitness_score))+
+  geom_line(aes(colour = child), show.legend = FALSE)+
+  facet_grid(~ group)+
+ geom_text(data = fitness_levels %>% 
+             group_by(child) %>% 
+             filter(age == 13), aes(label = child),
+           check_overlap = TRUE)+
+  theme_light()
+```
+#3.2
+```{r}
+blood_pressure <- CodeClanData::blood_pressure
+car_use <- CodeClanData::car_use
+```
+```{r}
+blood_pressure %>% 
+  ggplot(aes(x = daily_saturated_fat_intake_mg,
+             y = systolic_blood_pressure_mm_hg))+
+  geom_point()+
+  labs(x = "Daily Saturated Fat Intake (mg)",
+       y = "Blood Pressure (mm/hg)",
+       title = "Saturated Fat Intake vs Blood Pressure")+
+  theme_light()
+```
+```{r}
+car_use <- car_use %>% 
+  mutate(cars_in_use = car_use_percent*population) %>% 
+  select(-c("car_use_percent", "population"))
+
+car_use %>% 
+  ggplot(aes(x = cars_in_use,
+             y = air_so2_concentration_ppm,
+             colour = city))+
+  geom_point()+
+  theme_light()+
+  labs(title = "Car Use vs Air so2 Concentration",
+       x = "Cars in Use",
+       y = "Air so2 Conecentration (ppm)")
+```
+#3.3
+```{r}
+d20_outcomes <- CodeClanData::d20_outcomes
+d20x5_outcomes <- CodeClanData::d20x5_outcomes
+```
+
+
+

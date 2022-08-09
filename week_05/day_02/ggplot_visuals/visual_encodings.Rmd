@@ -1,0 +1,67 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(CodeClanData)
+```
+
+```{r}
+total_sales <- CodeClanData::total_sales
+```
+```{r}
+total_sales %>% 
+  ggplot(aes(x = sales,
+             y = branch,
+             fill = branch == "Leeds"))+
+  geom_col()+
+  scale_fill_manual(values = c("grey", Leeds = "red"),
+                               guide = "none")
+```
+
+```{r}
+total_sales_anno <- mutate(total_sales, label_text = ifelse(branch == "Leeds", "The Leeds branch has sales of 715k", NA))
+
+ggplot(total_sales_anno, aes(sales, branch, fill = branch == "Leeds"))+
+  geom_col()+
+  scale_fill_manual(values = c("grey", "red"), guide = "none")+
+  geom_text(aes(label = label_text),
+            colour = "blue")
+```
+#task - Suppose we’re doing a comparison between January and April now. We want to understand which branches are improving. For this we can look in the dataset monthly_sales. The variable difference_from_january has each month’s sales differences from January.
+
+#original
+```{r}
+monthly_sales <- CodeClanData::monthly_sales
+
+monthly_sales %>%  
+  mutate(month = factor(month, levels = c("Jan", "Feb", "March", "April")))
+
+ggplot(monthly_sales) +
+  aes(x = branch, y = sales, fill = month) +
+  geom_col(position = "dodge") +
+  coord_flip()
+```
+
+#improvement
+```{r}
+monthly_sales_april <- monthly_sales %>%
+  filter(month == "April") 
+
+min_max <-max(abs(monthly_sales_april$difference_from_jan))
+  
+ggplot(monthly_sales_april) +
+  aes(
+    x = reorder(branch, difference_from_jan),
+    y = difference_from_jan,
+    fill = difference_from_jan > 0
+  ) +
+  geom_col() +
+  ylim(-min_max, min_max) +
+    labs(y = "Difference in sales", x = "Branch location", title = "Sales differences between January and April") + 
+  scale_fill_manual(values = c("tomato", "seagreen"), name = "", labels = c("decrease", "increase")) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
