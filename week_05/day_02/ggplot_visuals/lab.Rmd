@@ -67,9 +67,10 @@ car_use <- car_use %>%
 car_use %>% 
   ggplot(aes(x = cars_in_use,
              y = air_so2_concentration_ppm,
-             colour = city))+
+             label = city))+
   geom_point()+
   theme_light()+
+  geom_text_repel(size = 3, min.segment.length = 0.01)+
   labs(title = "Car Use vs Air so2 Concentration",
        x = "Cars in Use",
        y = "Air so2 Conecentration (ppm)")
@@ -78,6 +79,16 @@ car_use %>%
 ```{r}
 d20_outcomes <- CodeClanData::d20_outcomes
 d20x5_outcomes <- CodeClanData::d20x5_outcomes
+```
+```{r}
+d20_outcomes <- d20_outcomes %>% 
+  group_by(outcome) %>% 
+  summarise(outcome_num = sum(outcome), .groups = "keep")
+
+d20_outcomes %>% 
+  ggplot(aes(x = outcome, 
+             y = outcome_num))+
+  geom_col()
 ```
 
 
