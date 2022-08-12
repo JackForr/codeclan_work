@@ -6,7 +6,7 @@ students_big <- read_csv("data/students_big.csv")
 
 colours <- c(Blue = "#3891A6", Yellow = "#FDE74C", Red = "#E3655B")
 
-shapes <- c("square", "circle", "triangle")
+shapes <- c("square" = "12", "circle" = "16", "triangle" = "17")
 
 ui <- fluidPage(
   
@@ -14,7 +14,6 @@ ui <- fluidPage(
   
   sidebarLayout(
     sidebarPanel = sidebarPanel(
-      p("Reaction Time vs Memory Game"),
       radioButtons(inputId = "colour_input",
                    label = "Colour of points",
                    choices = colours),
@@ -23,25 +22,42 @@ ui <- fluidPage(
                   label = "Transparency of points",
                   min = 0,
                   max = 1,
+                  step = 0.1,
                   value = 0.5),
       
       selectInput(inputId = "shape_input",
                   label = "Shape of points",
-                  choices = shapes)
-    )),
-  
-  mainPanel = mainPanel(
-    "Reaction Time vs Memory",
-    br(),
-    plotOutput("reaction_memory_plot"),
+                  choices = shapes),
+      
+      textInput(inputId = "title_input",
+                label = "Title of Graph",
+                value = "Enter text..." )
+    ),
+    
+    mainPanel = mainPanel(
+      "Reaction Time vs Memory",
+      br(),
+      plotOutput("reaction_plot"),
+    )
   )
 )
-
-server <- function(input, output){
+  
+  server <- function(input, output){
+    
+    output$reaction_plot <- renderPlot({
+      students_big %>% 
+        ggplot(aes(x = reaction_time,
+                   y = score_in_memory_game))+
+        geom_point(shape = as.integer(input$shape_input),
+                   colour = input$colour_input,
+                   alpha = input$slider_input,
+                   show.legend = F,
+                   size = 0.5)+
+        theme_linedraw()
+    })
+    
+  }
   
   
-}
-
-
-shinyApp(ui = ui,
-         server = server)
+  shinyApp(ui = ui,
+           server = server)
