@@ -1,0 +1,106 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+## Single step experiments
+
+$$
+prob(event) = num(event_outcomes) / num(all_outcomes)
+$$
+```{r}
+s <- rolldie(2)
+
+total_seven <- s %>% 
+  filter(X1 + X2 == 7)
+
+nrow(total_seven) / nrow(s)
+```
+
+## Multiple step experiments
+
+step 1: rolling a dice - 6 possible outcomes
+step 2 tossing a coin - 2 possible outcomes
+6*2 = 12 possible outcomes
+
+p(heads) = 1/2
+p(6) = 1/6
+1/2 * 1/6 = 1/12 probability of 2 step experiment
+
+```{r}
+s_die <- rolldie(1)
+s_coin <- tosscoin(1)
+
+s_total <- merge(s_coin, s_die)
+
+head_six <- s_total %>% 
+  filter(toss1 == "H", X1 == 6)
+
+nrow(head_six)/nrow(s_total)
+```
+
+## Permutations and combinations
+
+permutation <- An arrangement of outcomes which the order matters (padlock code)
+
+combination <- An arrangement of outcomes which the order does not matter (lottery ticket)
+
+```{r}
+v <- 2:5
+
+fact <- function(n,r){
+  factorial(n)/factorial(n-r)
+}
+
+fact(4,4)
+fact(10, 4)
+```
+
+
+```{r}
+library(gtools)
+```
+```{r}
+#example
+nrow(permutations(4, 4, repeats.allowed = T))
+```
+#how many permutations of 10 possible employees to fill 3 positions??
+```{r}
+employees <- c("Alice", "Bob", "Carole", "David", "Elaine", "Fred", "Gabra", "Hua", "Inigo", "Hugo")
+
+seniors <- as_tibble(permutations(n = 10, r=3, v = employees, repeats.allowed = F))
+
+ seniors <- seniors %>% 
+  rename(CEO = V1, CTO = V2, COO = V3)
+```
+# Probability of alice being selecetd as CEO and John as CTO, if selection is again at random 
+```{r}
+seniors %>% 
+  filter(CEO == "Alice", CTO == "Bob")
+
+8/720 # could be done using nrow after assigning new variable
+```
+
+## Combinations
+```{r}
+num_draws <- choose(50, 6) 
+
+options(scipen = 99)
+1 / num_draws
+```
+
+# 5 icecream flavours and a bowl that can hold three scoops. How many different variations in bowls of ice cream can I have assuming:
+#Each scoop must be a different flavour
+#I can repeat flavours if I wish?
+
+```{r}
+flavours <- c("vanilla", "chocolate", "raspberry", "strawberry", "pistachio")
+
+bowl_repeats <- combinations(n = 5, r = 3, repeats.allowed = T) %>% 
+nrow()
+
+bowl_no_repeats <- combinations(n = 5, r = 3, repeats.allowed = F) %>% 
+nrow()
+```
+
+
+

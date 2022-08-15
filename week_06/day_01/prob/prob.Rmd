@@ -1,0 +1,39 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+```
+
+```{r}
+source("prob.R")
+```
+```{r}
+s_two_dice <- rolldie(2)
+```
+```{r}
+s_two_dice %>% 
+  filter(X1 + X2 == 7) 
+```
+```{r}
+s_two_dice <- s_two_dice %>% 
+  mutate(total = X1 + X2)
+```
+```{r}
+s_sum_equals_seven <- s_two_dice%>% 
+  filter(total == 7 )
+```
+```{r}
+first_die_even <- s_two_dice %>% 
+ filter(X1 %% 2 == 0)
+```
+```{r}
+die2_minus_die1 <- s_two_dice %>% 
+  filter(X2 - X1 == -2)
+```
+```{r}
+differ_by_two <- s_two_dice%>% 
+  filter(X2 - X1 != 2|-2)
+```
+

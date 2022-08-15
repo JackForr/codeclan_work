@@ -1,0 +1,86 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+s_four_coins <- tosscoin(4)
+```
+#probability of 2 head being thrown 
+```{r}
+s_four_coins <- s_four_coins %>% 
+  mutate(num_heads = rowSums(. == "H"))
+
+s_at_least_2_heads <- s_four_coins %>% 
+  filter(num_heads >= 2)
+
+prob_two_heads <- nrow(s_at_least_2_heads) / nrow(s_four_coins) #probability
+
+1 - prob_two_heads # compliment
+```
+
+## `AND` combinations 
+s: {1, 2, 3, 4, 5, 6}
+event A: {1, 2, 3, 4} 
+event B: {3, 4, 5, 6}  
+#both can only be satisifed by rolling a 3 or 4 with one throw
+```{r}
+rolldie(1) %>% 
+  filter(X1 %in% 3:4)
+```
+#probability of rolling at least 1 head and one tail, from 4 roll function
+```{r}
+s_four_coins %>% 
+  mutate(num_tails = rowSums(. == "T")) %>% 
+  filter(num_heads >= 1, num_tails >= 1) %>% 
+  summarise(probability = n()/nrow(s_four_coins))
+```
+## Mutually exclusive events
+
+>with four coin toss, probability of tossing at least 3 heads and at least 2 tails (throwing 3 heads excludes 2 tails, with 4 coins)
+
+## OR combintaion
+
+> union
+event A: roll even number {2, 4, 6}
+event B: roll one of {4,5}
+
+```{r}
+s_two_dice <- rolldie(2)
+
+s_two_dice %>% 
+  filter(X2 %% 2 == 0| X2 == 5) %>% 
+  summarise(n() / nrow(s_two_dice))
+```
+##Task
+
+#first die even
+```{r}
+s_two_dice %>% 
+  filter(X1 %%2 == 0) %>% 
+  summarise(n() / nrow(s_two_dice))
+```
+#second die 5
+```{r}
+s_two_dice %>% 
+  filter(X2 == 5) %>% 
+  summarise(n() / nrow(s_two_dice))
+```
+
+
+
+#first die even and second die 5
+```{r}
+s_two_dice %>% 
+  filter(X1 %%2 == 0, X2 == 5) %>% 
+  summarise(n() / nrow(s_two_dice))
+```
+
+# first die even or second die 5
+```{r}
+s_two_dice %>% 
+  filter(X1%%2 == 0 | X2 == 5) %>% 
+  summarise(n() / nrow(s_two_dice))
+
+0.5 + 0.16666667 - 0.083333 # probability of x1 = even + probability of x2 = 5 - intersect (first die even and second die 5 as satisfies both condiitons)
+```
+
