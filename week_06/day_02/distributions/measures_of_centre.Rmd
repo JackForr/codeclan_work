@@ -1,0 +1,116 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+Distributions: a way of communicating how often something occurs (frequency distribution) / how likely it is to occur (probability distribution)
+
+```{r}
+library(tidyverse)
+source("prob.R")
+```
+```{r}
+tosscoin(1) %>% 
+  mutate(p = 1 / n())
+```
+# Uniform distribution
+```{r}
+s_three_coins_labelled <- tosscoin(3) %>% 
+  mutate(outcome = str_c(toss1, toss2, toss3, sep = ""),
+         p = 1 / n())
+  
+ggplot(s_three_coins_labelled)+
+  aes(x = outcome,
+      y = p)+
+  geom_col()
+```
+
+# Non uniform distribution - prob of 0 heads, 1 heads, 2 heads, 3 heads
+```{r}
+s_three_coins_labelled %>% 
+  mutate(n_heads = str_count(outcome, "H")) %>% 
+  group_by(n_heads) %>% 
+  summarise(p = sum(p)) %>% 
+  ggplot()+
+  aes(n_heads, p)+
+  geom_col()
+```
+
+##Measures of centrality (mean, median, mode) - averages
+```{r}
+library(janitor)
+library(lubridate)
+```
+```{r}
+air_con_sales <- read_csv("data/AirConSales.csv")
+
+air_con_clean <- air_con_sales %>% 
+  clean_names() %>% 
+  mutate(date = mdy(date))
+```
+
+#how often is it to sell a certain number of units? i.e. 3
+```{r}
+sales_freqs <- air_con_clean %>% 
+  tabyl(units_sold)
+```
+```{r}
+sales_freqs %>% 
+  ggplot()+
+  aes(units_sold, percent)+
+  geom_col()
+```
+
+#Mean - highly influenced by extreme values
+```{r}
+air_con_clean %>% 
+  summarise(mean_daily_sales = mean(units_sold))
+```
+#Median - middle value in an ordered sequence
+```{r}
+air_con_clean %>% 
+  summarise(mean_daily_sales = mean(units_sold),
+            median = median(units_sold))
+```
+#Mode - most commonly occuring value
+```{r}
+get_mode <- function(data){
+
+  tabled_data <- table(data)
+  table_names <- names(tabled_data)
+  
+  return( table_names[tabled_data == max(tabled_data)] )
+  
+}
+
+air_con_clean %>% 
+  summarise(mean_daily_sales = mean(units_sold),
+            median = median(units_sold),
+            mode = get_mode(units_sold))
+```
+#Distribution shapes (modality)
+>one mode: unimodal
+>two modes: bimodal
+
+#Skweness (the assymetry of a distribution)
+>left skewed (tail of distribution points left) - mean < median < mode
+>right skewed (tail points right) - mode < median < mean
+>symmetric
+
+```{r}
+library(e1071)
+```
+
+quanitfying a skew: < 0.5 fairly symmetric
+                      0.5 - 1.0 moderately skewed
+                    > 1.0 highly skewed
+                    
+                    negative - left skew
+                    positive - right skew
+                    
+```{r}
+air_con_clean %>% 
+  summarise(skew = skewness(units_sold, type = 1))
+```
+
+
+

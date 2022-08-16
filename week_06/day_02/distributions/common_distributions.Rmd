@@ -1,0 +1,225 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+##Discrete (countable & finite) and continuous variables (uncountable)
+
+number of people in my survey who like blue = discrete value (whole num)
+height of people in Scotland = continuous (infinite decimal places)
+
+age = continuous & numeric
+age group = ordinal & categoric
+no. of people in a household = continuous
+height = continuous numeric
+weight = continuous numeric
+shoe size = ordinal categoric
+
+## Probability Mass & Probability Density 
+
+probability mass function <- probability distribution of a discrete variable
+
+probability density function <- probability distribution of a continuous variable
+
+we cannot measure probabilities of probability density functions, but can for mass functions
+ - for continuous variable would have to be for a range of values
+ 
+Discrete probability distributions:
+- outcome on X axis
+- y is probability of that outcome
+- sum of all probabilities = 1
+- each probability between 0 and 1
+
+Continuous probability distributions:
+- outcome on X axis
+- y is probability density
+- sum of all probabilities = 1 (area under line must be 1)
+
+##Discrete Distributions
+```{r}
+library(tidyverse)
+```
+
+```{r}
+source("prob.R")
+```
+
+#uniform distribution - all probabilities are the same
+```{r}
+tosscoin(3) %>% 
+  mutate(label = str_c(toss1, toss2, toss3, sep = "")) %>% 
+  mutate(p = 1/n()) %>% 
+  ggplot(aes(label, p))+
+  geom_col()
+```
+
+#cumulative distribution fucntion (i.e. roll 1 or less, 2 or less...)
+```{r}
+rolldie(1) %>% 
+  mutate(p = 1/n()) %>% 
+  mutate(F_x = cumsum(p)) %>% 
+  ggplot(aes(X1, F_x))+
+  geom_step() #height of each "step" = 1/6 
+
+#individual probability for this = F_x - f_x-1
+```
+
+##Continuous Distributions
+
+#Continuous uniform
+>length of breaks were found to be uniformly distributed between 5 mins and 22 mins
+>probability density function of length (l)
+
+
+distribution finctions:
+d - distribution
+r - random numbers
+q - quantile
+p - cumulative density function
+
+```{r}
+brain_break <- tibble(
+  length = seq(4, 23, 0.1),
+  f_length = dunif(x = seq(4, 23, 0.1), min = 5, max = 22)
+)
+
+#probability density function - continuous variable
+brain_break %>% 
+  ggplot(aes(x = length, y = f_length))+
+  geom_line() # box due to uniform distribution
+
+#cumulative density function - continuous
+brain_break %>% 
+  mutate(F_length = punif(q = length, min = 5, max = 22))%>% #punif makes density function in a new row
+  ggplot(aes(x = length, y = F_length))+
+  geom_line() #straight line as probability of continuously increases over continuous variable length
+```
+whats the probability of a brain break lasting between 8.4 and 10.7?
+```{r}
+f_10_7 <- punif(
+  q = 10.7, min = 5, max = 22
+)
+
+f_8_4 <- punif(
+  q = 8.4, min = 5, max = 22
+)
+
+f_10_7 - f_8_4 #14% chance 
+```
+
+#showing this range on the initial plot
+```{r}
+brain_break %>% 
+  ggplot(aes(x = length, y = f_length))+
+  geom_line()+
+  geom_ribbon(aes(ymin = 0, ymax = ifelse(
+    length >= 8.4 & length <= 10.7, f_length, 0
+  )), fill = "red") # area = 0.135 i.e. probability of break being in this range
+```
+##Normal Distribution
+```{r}
+three_norms <- tibble(
+  x = seq(0, 100,1),
+  f1_x = dnorm(x = x, mean = 50, sd = 1),
+  f2_x = dnorm(x = x, mean = 50, sd = 5),
+  f3_x = dnorm(x = x, mean = 50, sd = 10)
+)
+
+three_norms %>% 
+  ggplot()+
+  geom_line(aes(x = x, f1_x), col = "red")+
+  geom_line(aes(x = x, f2_x), col = "black")+
+  geom_line(aes(x = x, f3_x), col = "blue")
+```
+#How to tell if your data is normally distributed
+ - compare it to a normal dataset
+ #1 plot histogram
+ #2 change metric of histogram ..density..
+ #3 stat function to overlay normal distribution
+ 
+```{r} 
+accounting_position_stats <- jobs %>%
+  filter(position == "Accounting") %>% 
+  summarise(
+    num = n(),
+    mean = mean(salary),
+    st_dev = sd(salary)
+  )
+```
+
+
+```{r}
+jobs %>% 
+  filter(position == "Accounting") %>% 
+  ggplot(aes(x = salary))+
+  geom_histogram(aes(y = ..density..))+ # turns from count to prob density scale
+  stat_function(
+    fun = ~dnorm(., mean = accounting_position_stats$mean,
+                 sd = accounting_position_stats$st_dev)
+  )
+```
+ "Standard Normal" - scaled so that the mean = 0 & sd = 1
+ 
+z: tells us how far away we are from the mean in units of standard deviation
+  - if z>3 then point is considered an outlier
+  - x - mean / sd
+  
+```{r}
+management_scaled <- jobs %>% 
+  filter(position == "Management") %>% 
+  mutate(z_salary = scale(salary)) %>% # z calculates z scores
+  mutate(mean_sal = mean(salary))
+
+management_scaled %>% 
+  filter(abs(z_salary) > 2)
+```
+```{r}
+shade_standard_normal <- function(shade_from, shade_to){
+  standard_normal <- tibble(
+    z = seq(from = -4, to = 4, by = 0.001),
+    f_z = dnorm(x = z)
+  )
+  standard_normal %>%
+    ggplot(aes(x = z, y = f_z)) +
+    geom_line() +
+    geom_ribbon(aes(ymin = 0, ymax = ifelse(z >= shade_from & z <= shade_to, f_z, 0)), fill = "red", alpha = 0.6)
+}
+
+shade_standard_normal(shade_from = -Inf, shade_to = 0)
+```
+ 
+# The empirical 3-sigma rule 
+
+most values lie within 3 standard deviations of the mean
+
+#how many values should lie within 1 sd of mean for a normal distribution?
+- 68% should if its a normal distribution
+
+```{r}
+100*(pnorm(q=1) - pnorm(q = -1))
+```
+```{r}
+100*(pnorm(q=2) - pnorm(q = -2))
+
+shade_standard_normal(-2, 2)
+```
+-95% should be within 2 sd of the mean
+```{r}
+100*(pnorm(q=3) - pnorm(q = -3))
+```
+-99.7% should be within 3 sd of the mean
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+

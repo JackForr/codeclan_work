@@ -1,0 +1,186 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(janitor)
+jobs <- read_csv("data-2/TyrellCorpJobs.csv") %>% 
+  select(-1) %>% 
+  clean_names()
+```
+
+#Range (max value - min value) - heavily effected by extreme values
+```{r}
+jobs %>% 
+  summarise(range = diff(range(salary)))
+```
+```{r}
+jobs %>% 
+  ggplot(aes(salary))+
+  geom_histogram(col = "white", bins = 25)
+```
+```{r}
+jobs %>% 
+  ggplot(aes(salary))+
+  geom_histogram(col = "white", bins = 25)+
+  facet_wrap(~position)
+```
+Evidence of bimodality. so consider each separately
+
+```{r}
+jobs %>% 
+  group_by(position) %>% 
+  summarise(range = diff(range(salary)))
+```
+more salary disparity in management than accounting
+
+#Interquartile range - less influenced by extremes
+0-->25 Q1 25-->100 
+0-->50 Q2 50-->100 (median)
+0-->75 Q3 75-->100
+IQ range = range of q1 to q3
+
+```{r}
+jobs %>% 
+  group_by(position) %>% 
+  summarise(q1 = quantile(salary, 0.25),
+            q2 = quantile(salary, 0.5),
+            q3 = quantile(salary, 0.75),
+            iqr = q3 - q1,
+            iqr_from_stats = IQR(salary))
+```
+#The 5 figure summary (min, q1, median/q2, q3, max)
+```{r}
+library(skimr)
+```
+```{r}
+jobs %>% 
+  group_by(position) %>% 
+  skim()
+```
+#Box plots - a graphical view of quartiles
+```{r}
+jobs %>% 
+  group_by(position) %>% 
+  summarise(q1 = quantile(salary, 0.25),
+            q2 = quantile(salary, 0.5),
+            q3 = quantile(salary, 0.75),
+            iqr = q3 - q1,
+            outlier_distance = 1.5 * iqr)
+```
+```{r}
+jobs %>% 
+  ggplot()+
+  aes(x = salary, y = position)+
+  geom_boxplot()+
+  stat_boxplot(geom = "errorbar", width = 0.5)
+```
+#Task
+```{r}
+set.seed(42) # all get the same randomly generated data
+distribution_1 <- tibble(
+  y = append(rnorm(n = 100, mean = 5, sd = 10), rnorm(n = 200, mean = 5, sd = 1))
+)
+
+distribution_2 <- tibble(
+  y = runif(n = 1000, min = -30, max = 30)
+)
+```
+```{r}
+skim(distribution_1)
+
+distribution_1 %>% 
+  rename("value" = y) %>% 
+  ggplot(aes(x = value))+
+  geom_boxplot()+
+  stat_boxplot(geom = "errorbar", width = 0.5)+
+  labs(title = "distribution 1")
+
+distribution_1 %>% 
+  ggplot(aes(x = y))+
+  geom_histogram()
+
+skim(distribution_2)
+
+distribution_2 %>% 
+  rename("value" = y) %>% 
+  ggplot(aes(x = value))+
+  geom_boxplot()+
+  stat_boxplot(geom = "errorbar", width = 0.5)+
+  labs(title = "distribution 2")
+
+distribution_2 %>% 
+  ggplot(aes(x = y))+
+  geom_histogram()
+```
+#highly symmetric distribution
+```{r}
+distribution_2 %>% 
+  summarise(skew = skewness(y, type = 1))
+```
+#right skewed distribution
+```{r}
+heavily_right_skewed <- read_csv("data-2/heavily_right_skewed.csv")
+```
+```{r}
+heavily_right_skewed %>% 
+  summarise(skew = skewness(x, type = 1))
+```
+```{r}
+heavily_right_skewed %>% 
+  ggplot(aes(x = x))+
+  geom_boxplot() #outliers on right hand side & median on left side of the box
+```
+```{r}
+heavily_right_skewed %>% 
+  ggplot(aes(x = x))+
+  geom_histogram()
+
+heavily_right_skewed %>% 
+  skim()
+```
+
+##Variance - a measure of how far each value in the data set is from the mean
+>(sum of difference from mean)^2 / (total number -1)
+
+#hypothetical example of weights between marathon runners and commuters in london
+```{r}
+set.seed(42)
+
+londoner_weights <- tibble(
+  marathoners = rnorm(50, mean = 68, sd = 0.5),
+  commuters = rnorm(50, mean = 68, sd = 5)
+) %>% 
+  pivot_longer(cols = everything(), names_to = "group", values_to = "weight")
+
+ggplot(londoner_weights) +
+  aes(x = weight, y = group) +
+  geom_boxplot()
+```
+```{r}
+londoner_weights %>%
+  group_by(group) %>% 
+  summarise(mean_weight = mean(weight),
+            var_weight = var(weight),
+            st_dev_weight = sd(weight)) #s.d = square root of variance
+#average deviation from mean weight of commuters is 4.6kg
+```
+##Longhand variance calculation
+$$
+s^2 = \frac{1}{n-1}\sum{(x - \bar{x})^2}
+$$
+##Standard deviation = square root of variance
+
+#task
+```{r}
+jobs %>% 
+group_by(position) %>% 
+  summarise(mean = mean(salary),
+            var_salary = var(salary),
+            st_dev_salary = sd(salary))
+
+#s.d. in Accounting is £2,383.68 & £10,940.56 in Management
+```
+
+
