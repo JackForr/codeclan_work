@@ -1,0 +1,127 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(janitor)
+```
+```{r}
+telco <- read_csv("data/telecomms_churn.csv") %>% 
+  clean_names()
+glimpse(telco)
+```
+Pretend this dataset is the whole population
+-lets calculate population parameters
+```{r}
+summary_popn <- telco %>% 
+  summarise(
+    mean_monthly_charges = mean(monthly_charges),
+    mean_tenure = mean(tenure),
+    prop_churn = sum(churn == "Yes") / n()
+  )
+```
+```{r}
+telco %>% 
+  ggplot(aes(x = monthly_charges))+
+  geom_histogram(col = "white",
+                 fill = "steel blue",
+                 alpha = 0.7)
+```
+```{r}
+telco %>% 
+  ggplot(aes(x = tenure))+
+  geom_histogram(col = "white",
+                 fill = "steel blue",
+                 alpha = 0.7)
+```
+```{r}
+telco %>% 
+  ggplot(aes(x = churn))+
+  geom_bar(col = "white",
+                 fill = "steel blue",
+                 alpha = 0.7)
+```
+
+## Taking random samples
+
+```{r}
+library(infer)
+
+sample_200 <- telco %>% 
+  rep_sample_n(200, reps = 1)
+```
+```{r}
+summary_sample_200 <- sample_200 %>% 
+  ungroup() %>% #as sample groups by replicate by default
+  summarise(
+    mean_monthly_charges = mean(monthly_charges),
+    mean_tenure = mean(tenure),
+    prop_churn = sum(churn == "Yes") / n()
+  )
+```
+```{r}
+summary_sample_200 - summary_popn # sampling errors can be done as we know population parameters in this case
+```
+##Central Limit Theorem
+- distribution of sample statistics approximates a normal distribution (reasonable size)
+
+```{r}
+rep_sample_200 <- telco %>% #repeated sampling 5000x
+  rep_sample_n(200, reps = 5000) %>% 
+  summarise(
+    mean_monthly_charges = mean(monthly_charges),
+    mean_tenure = mean(tenure),
+    prop_churn = sum(churn == "Yes") / n()
+  )
+```
+#distribution of means from each samples
+```{r}
+mean_monthly_charges_plot <- rep_sample_200 %>% #fits normal distribution and is evidence of central limit theorem
+  ggplot(aes(x = mean_monthly_charges))+
+  geom_histogram(col = "white",
+                 fill = "steel blue",
+                 alpha = 0.7)+
+  labs(x = "mean monthly charges form each sample")
+
+mean_tenure_plot <- rep_sample_200 %>% #fits normal distribution and is evidence of central limit theorem
+  ggplot(aes(x = mean_tenure))+
+  geom_histogram(col = "white",
+                 fill = "steel blue",
+                 alpha = 0.7)+
+  labs(x = "mean tenure form each sample")
+
+mean_prop_churn_plot <- rep_sample_200 %>% #fits normal distribution and is evidence of central limit theorem
+  ggplot(aes(x = prop_churn))+
+  geom_histogram(col = "white",
+                 fill = "steel blue",
+                 alpha = 0.7)+
+  labs(x = "mean churn form each sample")
+```
+
+#Standard Errors
+- standard deviation taken from the sampling distribution
+
+```{r}
+std_errors <- rep_sample_200 %>% 
+  summarise(
+    se_mean_monthly_charges = sd(mean_monthly_charges),
+    se_mean_tenure = sd(mean_tenure),
+    se_prop_churn = sd(prop_churn)
+  )
+```
+#what percentage of samples had a mean between 60 and 70??
+```{r}
+library(fastGraph)
+
+shadeDist(
+  xshade = c(60,70),
+  lower.tail = FALSE,
+  ddist = "dnorm",
+  parm1 = mean(rep_sample_200$mean_monthly_charges),
+  parm2 = std_errors$se_mean_monthly_charges,
+  xlab = "mean_monthly_charges"
+)
+```
+
+

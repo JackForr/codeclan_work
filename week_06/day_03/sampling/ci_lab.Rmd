@@ -1,0 +1,43 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(janitor)
+library(infer)
+
+house_sales <- read_csv("data_lab2/ames.csv") %>% 
+  clean_names()
+
+sale_price <- house_sales %>% 
+  select(sale_price)
+```
+#Q2
+```{r}
+sale_price %>% 
+  ggplot(aes(x = sale_price))+
+  geom_histogram(bins = 50)
+```
+distribution of sale prices looks left skewed
+
+#Q3
+```{r}
+mean_price_pop <- sale_price %>% 
+  summarise(mean_price_pop = mean(sale_price))
+```
+#Q4
+```{r}
+bootstrap_resample <- sale_price %>% 
+  rep_sample_n(size = 100, 
+               reps = 1000,
+               replace = TRUE) %>% 
+  summarise(mean_price = mean(sale_price))
+
+results <- bootstrap_resample %>% 
+  summarise(mean = mean(mean_price),
+            lower_bound = quantile(mean_price, probs = 0.005),
+            upper_bound = quantile(mean_price, probs = 0.095))
+```
+
+

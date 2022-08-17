@@ -1,0 +1,100 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+#Q1
+```{r}
+library(tidyverse)
+library(janitor)
+library(fastGraph)
+library(infer)
+
+heart <- read_csv("data_lab/heart.csv") %>% 
+  clean_names()
+```
+#Q2
+```{r}
+heart %>% 
+  ggplot(aes(x = thalach))+
+  geom_histogram(col = "white")+
+  labs(title = "distribution of max hr")
+```
+histogram looks slightly left (negative) skewed, unimodal
+
+#Q3
+```{r}
+heart %>% 
+  mutate(exang = as.logical(exang)) %>% 
+  ggplot(aes(x = exang))+
+  geom_bar()+
+  labs(title = "presence of exercuse induced angina")
+```
+#Q4
+```{r}
+heart %>% 
+  summarise(mean_thalach = mean(thalach))
+
+
+prop_exang <- heart %>% 
+  filter(exang == 1) %>% 
+  summarise(n() / nrow(heart))
+```
+#Q5
+```{r}
+sample_50 <- heart %>% 
+  rep_sample_n(50)
+
+mean_thalach <- sample_50 %>% 
+  summarise(mean(thalach)) %>% 
+  select(-1)
+
+prop_exang <- sample_50 %>% 
+  filter(exang == 1) %>% 
+  summarise(n() / nrow(sample_50)) %>% 
+  select(-1)
+```
+#Q6
+```{r}
+pop_mean <- heart %>% 
+  summarise(mean(thalach))
+
+se_thalach <- mean_thalach - pop_mean
+
+pop_prop <- heart %>% 
+  filter(exang ==1) %>% 
+  summarise(n() / nrow(heart))
+
+se_exang <- prop_exang - pop_prop
+```
+#Q7
+```{r}
+rep_sample_50 <- heart %>% 
+  rep_sample_n(50, reps = 5000) %>% 
+  summarise(mean_thalach = mean(thalach),
+            prop_exang = sum(exang) / n())
+```
+
+#Q8
+```{r}
+rep_sample_50 %>% 
+  ggplot(aes(x = mean_thalach))+
+  geom_histogram()
+
+rep_sample_50 %>% 
+  ggplot(aes(x = prop_exang))+
+  geom_histogram(binwidth = 0.02)
+```
+#Q9
+```{r}
+std_errors <- rep_sample_50 %>% 
+  summarise(
+    se_mean_thalach = sd(mean_thalach), #how far on average are each observation from the mean of all sample means
+    se_prop_exang = sd(prop_exang)
+  )
+```
+#Q10
+```{r}
+
+```
+
+
