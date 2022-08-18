@@ -1,0 +1,64 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(janitor)
+library(infer)
+
+books <- read_csv("data/books.csv")
+
+books_tidy <- books %>%
+  clean_names() %>%
+  filter(!is.na(average_rating)) %>%
+  rename(num_pages = number_num_pages) %>%
+  glimpse()
+```
+## does the proportion of books that lack text reviews differ signigicantly from 7%?
+```{r}
+books_tidy %>% 
+  group_by(text_reviews_count) %>% 
+  summarise(prop = n() / nrow(books_tidy)) %>% 
+  filter(text_reviews_count == 0)
+```
+>Null hypothesis: proportion of books is not different from 7%
+>Alternative hypothesis: proportion of books is equal to 7%
+
+```{r}
+books_tidy_prop <- books_tidy %>% 
+  mutate(has_reviews = text_reviews_count >0)
+
+mean(books_tidy_prop$has_reviews) #mean reviews for books with reviews
+```
+```{r}
+null_distribution <- books_tidy_prop %>% #sampling for distribution of proportions
+  specify(response = has_reviews, success = "FALSE") %>% 
+  hypothesise(null = "point", p = 0.07) %>% 
+  generate(reps = 1000, type = "draw") %>% #draw pulls true or false
+  calculate(stat = "prop")
+```
+```{r}
+null_distribution %>% 
+  visualise(bins = 30)
+```
+```{r}
+observed_stat <- books_tidy_prop %>% 
+  specify(response = has_reviews, success = "FALSE") %>% 
+  calculate(stat = "prop")
+
+null_distribution %>% 
+  visualise(bins = 30) +
+  shade_p_value(obs_stat = observed_stat, direction = "both")
+  
+```
+```{r}
+p_value <- null_distribution %>% 
+  get_p_value(obs_stat = observed_stat, direction = "both" )
+```
+since p value < alpha, we reject null hypothesis
+
+p value is the proportion of distribution that is significantly different from
+7% i.e. lower than observed stat, since this is lower than alpha of 0.05 we reject null hypothesis (proportion of books without text reviews is different from 7%)
+
+

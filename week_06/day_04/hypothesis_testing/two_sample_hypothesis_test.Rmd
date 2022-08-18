@@ -1,0 +1,173 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(janitor)
+library(infer)
+```
+```{r}
+nice <- read_csv("data_2/nice.csv")
+algarve <- read_csv("data_2/algarve.csv")
+corfu <- read_csv("data_2/corfu.csv")
+florence <- read_csv("data_2/florence.csv")
+```
+##Independent sample (not related)
+> is the mean price of lets in the Algarve significantly higher than mean price in Nice
+
+NULL hypothesis: mean price of lets in the Algarve are NOT significantly higher than Nice
+H_0: \mu{algarve} = \mu{nice}\\
+
+Alternative hypothesis: mean price of lets in the Algarve ARE  significantly higher than Nice
+H_1: \mu{algarve} > \mu{nice}\\
+
+```{r}
+apart_prices <- bind_rows(nice = nice,
+                          algarve = algarve,
+                          .id = "location")
+
+apart_prices %>% 
+  filter(location == "algarve") %>% 
+  ggplot(aes(x = price))+
+  geom_histogram(bins = 15,
+                 col = "white")
+
+apart_prices %>% 
+  filter(location == "nice") %>% 
+  ggplot(aes(x = price))+
+  geom_histogram(bins = 15,
+                 col = "white")
+```
+```{r}
+null_distribution <- apart_prices %>% 
+  specify(price ~ location) %>% #response = price, explanatory = location
+  hypothesise(null = "independence") %>% 
+  generate(reps = 1000, type = "permute") %>% #labels in any order
+  calculate(stat = "diff in means", order = c("algarve", "nice"))
+  
+```
+```{r}
+observed_stat <- apart_prices %>% 
+  specify(price ~ location) %>% 
+  calculate(stat = "diff in means", order = c("algarve", "nice")) #just avg - avg overall
+```
+```{r}
+null_distribution %>% 
+  visualise()+
+  shade_p_value(obs_stat = observed_stat, direction = "greater")
+```
+```{r}
+p_value <- null_distribution %>% 
+  get_p_value(obs_stat = observed_stat, direction = "greater")
+```
+The price is significantly different as p_value (0.001) < 0.5, therefore we reject null hypothesis 
+
+#Task 
+
+alpha = 0.05,
+null hypothesis: price in florence is not significantly different from Corfu
+alternative hypothesis: price in florence is significantly less than Corfu
+
+```{r}
+ florence_corfu_prices <- bind_rows(florence = florence,
+                                    corfu = corfu, 
+                                    .id = "location")
+florence_corfu_prices %>% 
+  filter(location == "florence") %>% 
+  ggplot(aes(x = price))+
+  geom_histogram(bins = 15,
+                 col = "white")
+
+florence_corfu_prices %>% 
+  filter(location == "corfu") %>% 
+  ggplot(aes(x = price))+
+  geom_histogram(bins = 15,
+                 col = "white")
+
+null_distribution <- florence_corfu_prices %>% 
+  specify(response = price, explanatory = location) %>% 
+  hypothesise(null = "independence") %>% 
+  generate(reps = 1000, type = "permute") %>% 
+  calculate(stat = "diff in means", order = c("florence", "corfu"))
+
+observed_stat <- florence_corfu_prices %>% 
+  specify(response = price, explanatory = location) %>%
+  calculate(stat = "diff in means", order = c("florence", "corfu"))
+
+null_distribution %>% 
+  visualise()+
+  shade_p_value(obs_stat = observed_stat, direction = "left")
+
+p_value <- null_distribution %>% 
+  get_p_value(obs_stat = observed_stat, direction = "left")
+```
+
+Florence is not cheaper, therefore everything to the left of the observed stat is shaded 
+
+p_value > 0.05  therefore florence is significantly more expensive 
+
+##Paired / dependent sample
+```{r}
+textbooks <- read_csv("data_2/ucla_textbooks_f18.csv")
+```
+> is there a significant difference on average between prices for new texts offered by campus bookstore vs the same book on amazon
+
+Null: there is not a significant difference on avg between bookstore - amazon
+Alternative :there is a significant difference on avg between bookstore - amazon
+
+```{r}
+books_diff <- textbooks %>% 
+  mutate(diff_new = bookstore_new - amazon_new) %>% 
+  filter(!is.na(diff_new))
+
+books_diff %>% 
+  ggplot(aes(x = diff_new))+
+  geom_histogram()
+```
+```{r}
+null_distribution <- books_diff %>% 
+  specify(response = diff_new) %>% 
+  hypothesise(null = "point", mu = 0) %>% 
+  generate(reps = 1000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+observed_stat <- books_diff %>% #diff in means
+  specify(response = diff_new) %>% 
+  calculate(stat = "mean")
+
+null_distribution %>% 
+  visualise()+
+  shade_p_value(obs_stat = observed_stat, direction = "both")
+
+p_value <- null_distribution %>% 
+  get_p_value(obs_stat = observed_stat, direction = "both")
+```
+Our study suggests that the prices in the bookshop are significantly different from the prices on amazon on avg (p = 0.034 < alpha of 0.05)
+
+
+#Are prices lower on amazon? (reframe)
+```{r}
+books_diff <- textbooks %>% 
+  mutate(diff_used = bookstore_used - amazon_used) %>% 
+  filter(!is.na(diff_used))
+
+
+null_distribution <- books_diff %>%  # +means amazon cheaper
+  specify(response = diff_used) %>% 
+  hypothesise(null = "point", mu = 0) %>% 
+  generate(reps = 1000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+observed_stat <- books_diff %>% #diff in means suggests amazon cheaper 
+  specify(response = diff_used) %>% 
+  calculate(stat = "mean")
+
+null_distribution %>% 
+  visualise()+
+  shade_p_value(obs_stat = observed_stat, direction = "right") # right as you only want to shade extreme values greater than 12.16 (observed stat) - if observed stat is on either tail you want a low p so < alpha i.e. significant
+
+p_value <- null_distribution %>% 
+  get_p_value(obs_stat = observed_stat, direction = "right")
+```
+Our study suggests that amazon prices are significantly lower than the bookshop for used books (p<0.00001)

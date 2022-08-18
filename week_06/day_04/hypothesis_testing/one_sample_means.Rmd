@@ -1,0 +1,108 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(janitor)
+library(infer)
+
+books <- read_csv("data/books.csv")
+
+books_tidy <- books %>%
+  clean_names() %>%
+  filter(!is.na(average_rating)) %>%
+  rename(num_pages = number_num_pages) %>%
+  glimpse()
+```
+```{r}
+books_tidy %>% 
+  ggplot(aes(x = average_rating))+
+  geom_histogram(col = "white")
+
+books_tidy %>% 
+  ggplot(aes(x = average_rating))+
+  geom_jitter(aes(y = 0), height = 0.2)+
+  geom_boxplot(colour = 2)
+```
+##Is the 2020 average different from the 2016 average?
+
+```{r}
+mean(books_tidy$average_rating, na.rm = TRUE) #2020 is 3.937568 - sample
+#2016 is 3.93 (made up whole population)
+```
+set up __Null__(H0) hypothesis
+  - the hypothesis of no difference (skeptical position)
+
+and __Alternative__ (H1) hypothesis 
+  - hypothesis of difference 
+
+*two hypotheses must be mutually exclusive & exhaustive (cover all outcomes)*
+
+$$
+H_0 : \mu_{average \ rating} = 3.93
+$$
+$$
+H_1 : \mu_{average \ rating} \neq 3.93
+$$
+
+```{r}
+observed_stat <- mean(books_tidy$average_rating, na.rm = TRUE)
+```
+Is this significantly different from 2016s 3.93
+
+Hypothesis Test Steps:
+> step 1
+  - decide on significance/alpha level (before looking at data) - usually 0.05
+  - set error rate which dictates how often we wrongly declare significance i.e. 5%
+  
+> step 2
+  - calculate the statistic from the sample
+  
+> step 3
+  - create the sampling distribution - bootstrapping
+  - assume that it is TRUE during this
+  
+> step 4
+  - compare our calculated statistic with the sampling distribution
+  - if calculated stat is far enough into the tail of distrubution, we call it significant
+  - p-value^
+  
+> step 5
+  - if the p value < alpha we reject null hypothesis 
+  - if the p value > alpha we do not reject null hypothesis
+  
+##Hypothesis testing with `infer`
+```{r}
+null_distribution <- books_tidy %>%
+  specify(response = average_rating) %>%
+  hypothesise(null = "point", mu = 3.93) %>% 
+  generate(reps = 1000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+
+null_distribution %>% 
+  visualise(bins = 20) +
+  shade_p_value(obs_stat = observed_stat, direction = "both")
+
+observed_stat
+```
+```{r}
+null_distribution %>% 
+  visualise(bins = 20) +
+  shade_p_value(obs_stat = observed_stat, direction = "both")
+
+ p_value <- null_distribution %>% 
+  get_p_value(obs_stat = observed_stat, direction = "both")
+  
+```
+The p-value means: how likely are you to see a result as extreme as yours, if null hypothesis is true 
+
+#Our observed stat of 3.937568 is significantly different from our null stat of 
+3.93, at an alpha level of 0. 05 (0.05 > 0.014), therefore evidence in support
+of our alternative hypothesis 
+
+  
+  
+  
+
+
