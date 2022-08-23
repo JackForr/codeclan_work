@@ -1,0 +1,70 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(lubridate)
+```
+
+```{r}
+tour_de_france <- read_csv("data_lab/tour_de_france.csv")
+```
+#2.2
+```{r}
+tour_de_france <- tour_de_france %>% 
+  mutate(start_date = mdy(start_date),
+         born = dmy(born),
+         died = mdy(died))
+```
+
+#2.3
+```{r}
+tour_de_france <- tour_de_france %>% 
+  mutate(month = month(start_date, label = TRUE))
+
+tour_de_france %>% 
+  group_by(month) %>% 
+  summarise(count = n())
+# july is the most popular
+```
+#2.4
+```{r}
+tour_de_france <- tour_de_france %>% 
+  mutate(wday = wday(start_date, label = TRUE))
+
+tour_de_france %>% 
+  group_by(wday) %>% 
+  summarise(count = n()) # saturday most popular start day
+```
+#2.5
+```{r}
+tour_de_france <- tour_de_france %>% 
+  mutate(end_date = start_date + days(23))
+```
+#2.6
+```{r}
+tour_de_france <- tour_de_france %>%
+  mutate(start_age = start_date - born)
+
+tour_de_france <- tour_de_france %>%
+  mutate(start_age = as.numeric(start_age, "years"))
+```
+#2.7
+```{r}
+date_aus <- ymd_hms("2018-08-07 14:15:00", tz = "Australia/Sydney")
+date_london <- ymd_hms("2018-08-08 05:40:00", tz = "Europe/London")
+```
+
+#2.8
+```{r}
+duration <- as.duration(date_aus - date_london)
+```
+
+#2.9
+```{r}
+date_left <- ymd_hm("2018-08-10 06:20", tz = "Europe/London")
+
+date_arrived <- with_tz(date_left + dhours(28) + dminutes(46), tz = "Australia/Sydney")
+```
+

@@ -1,0 +1,81 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(lubridate)
+```
+```{r}
+netflix <- read_csv("data/netflix.csv")
+```
+```{r}
+class(ymd("2019-01-19"))
+
+mdy("January 9th, 2019")
+dmy("9-Jan-2019")
+
+ymd_hms("2019-01-19 10:08:26")
+ymd_hm("2019-01-19 10:08")
+ymd_h("2019-01-19 10")
+```
+#change column date_added from character to date
+```{r}
+netflix <- netflix %>% 
+  mutate(date_added = mdy(date_added))
+```
+##Extracting
+```{r}
+netflix %>% 
+  mutate(day = day(date_added),
+         month = month(date_added, label = TRUE, abbr = FALSE),
+         year = year(date_added),
+         wday = wday(date_added, label = TRUE))
+```
+##Calculating time spans
+ 3 types of time span :
+  - "Difftime" a _datetime_ object that represents days
+  - "Period" represents a timespan like week / month / day
+  - "Duration" represents an exact numebr of _seconds_
+  
+```{r}
+netflix <- netflix %>% #difftime
+  mutate(time_difftime = today() - date_added)
+
+netflix <- netflix %>% #period
+  mutate(time_period = as.period(today() - date_added),
+         time_years = as.numeric(time_period, "years"),
+         time_hours = as.numeric(time_period, "hours"),
+         time_minutes = as.numeric(time_period, "minutes"),
+         time_seconds = as.numeric(time_period, "seconds")
+         )
+
+netflix <- netflix %>% #duration
+  mutate(time_duration = as.duration(today() - date_added))
+  
+netflix %>% 
+  select(starts_with("time_"))
+```
+##Subtracting periods from dates
+```{r}
+netflix <- netflix %>% 
+  mutate(promo_date = date_added - weeks(2), 
+         removal_date = date_added + months(4))
+```
+```{r}
+ymd(20200110) + years(1)
+ymd(20200110) + dyears(1)
+```
+
+##Understanding time-zones
+```{r}
+ymd_hms("2023-09-13 10:22:01", tz = "Atlantic/Faroe")
+
+netflix <- netflix %>% 
+  mutate(date_tz_1 = force_tz(date_added, tzone = "Asia/Singapore"),
+         date_tz_2 = with_tz(date_added, tzone = "Asia/Singapore")) %>% 
+  select(date_added, date_tz_1, date_tz_2)
+```
+
+
+
