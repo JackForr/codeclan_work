@@ -1,0 +1,109 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+###simple linear regression
+>weight: independent
+>height: dependent
+>regression to describe relationship between variables & predict height based on weight
+
+```{r}
+height <- c(176, 164, 181, 168, 195, 185, 166, 180, 188, 174)
+weight <- c(82, 65, 85, 76, 90, 92, 68, 83, 94, 74 )
+```
+
+```{r}
+sample <- tibble(
+  weight,
+  height
+)
+```
+```{r}
+sample %>% 
+  ggplot(aes(x = weight, y = height))+ #dependent on y
+  geom_point()
+```
+```{r}
+line <- function(x, b0, b1){
+  return(b0 + x * b1)
+}
+```
+
+```{r}
+b0 <- 95
+b1 <- 1
+
+sample <- sample %>% 
+  mutate(fitted_height = line(x = weight, 
+                              b0 = b0,
+                              b1 = b1))
+```
+
+```{r}
+sample %>% 
+  ggplot(aes(x = weight, y = height))+
+  geom_point()+
+  geom_point(aes(y = fitted_height), shape = 1)+ #plotting fitted (estimate) heights
+  geom_abline(slope = b1, intercept = b0, col = "red")+ #fitted line based on estimate slope and intercept
+  geom_segment(aes(xend = weight, yend = fitted_height), #actual - fitted value
+               alpha = 0.5)
+```
+```{r}
+sample <- sample %>% 
+mutate(residual = height - fitted_height)
+```
+```{r}
+sample %>% 
+summarise(sum_residuals = sum(residual))
+```
+sum of residuals does not reflect accuracy of model, as positive and negative residuals counteract each other. Taking the squared value would get a value which better reflects accuracy as all will be positive.
+
+```{r}
+sample <- sample %>% 
+  mutate(sq_resid = residual ^ 2)
+```
+```{r}
+sample %>% 
+  summarise(sum_sq_resids = sum((sq_resid))) #minimise this for best fitting model
+```
+#linear model of height based on weight
+```{r}
+model <- lm(formula = height ~ weight, 
+            data = sample)
+```
+
+```{r}
+fitted(model)
+```
+```{r}
+model %>% 
+  predict(newdata = data.frame(weight = c(78))) #someone weighing 78kg is predicted to be 174.99cm based on model
+```
+
+```{r}
+library(modelr)
+```
+
+```{r}
+sample <- sample %>% 
+  select(-c(fitted_height, residual, sq_resid)) %>% 
+  add_predictions(model) %>% 
+  add_residuals(model)
+```
+```{r}
+sample %>% 
+  ggplot(aes(x = weight))+
+  geom_point(aes(y = height))+
+  geom_line(aes(y = pred), col = "red")
+```
+
+```{r}
+weights_predict <- tibble(
+  weight = 50:120
+)
+
+weights_predict %>% 
+  add_predictions(model)
+```
+
