@@ -1,0 +1,180 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+I want to make a model but ...
+
+My data has missing values (might impute them)
+My data has a couple of serious outliers (we'd seriously justify dropping them)
+My data is highly-right skewed (we'd transform the variable using log for example)
+My data is categorical (we'd encode this using dummy variables)
+My data has too many unique values (we'd group them together in bins to reduce the granularity)
+My data doesn't have the best predictors (we'd derive better ones)
+My data has variables that are measured in different units (we'd consider scaling)
+
+###missing values
+```{r}
+library(tidyverse)
+library(fastDummies)
+```
+```{r}
+grades <- read_csv("data/grades.csv")
+head(grades)
+```
+>Is there a way to model the students final grade?
+> y = final
+
+```{r}
+summary(grades)
+```
+```{r}
+grades <- grades %>% 
+  mutate(take_home = coalesce(take_home, mean(take_home, na.rm = TRUE)),
+         final = coalesce(final, mean(final, na.rm = TRUE))) #imputing missing values crucial for modelling
+```
+###dealing with outliers
+>don't be too hasty, and justify any removals
+
+###transformations
+>China and India have massice populations. So when plotting all the countries 
+and coluring based on population we only saw two groups.
+
+>When we've got very skewed data one strategy is to transform the variable:
+  -logs
+  -square root
+  -squared
+  
+>Converts non-linear relationships to linear
+
+### categorical data in a model
+
+>convert into a wide format where each categorical level is a variable (turn them
+into switches)
+
+>i.e. if maths is "switched on" what will the final grade be?
+      if english is "switched on" what will the final grade be?
+
+> y = slope for maths * maths + intercept (maths is 1/TRUE or 0/FALSE in wide format) 
+    - if maths is false, then no slope
+    
+>creating dummy variables 
+
+```{r}
+grades %>% 
+  distinct(subject)
+```
+
+```{r}
+#for reference, we wouldn't actually do this
+grades_dummy <- grades %>% 
+  mutate(english = if_else(subject == "english", 1, 0),
+         maths = if_else(subject == "maths", 1, 0),
+         physics = if_else(subject == "ohysics", 1, 0),
+         french = if_else(subject == "french", 1, 0)) %>% 
+  select(-subject)
+```
+
+If maths, physics, french and english are 0, we know biology must be 1. Therefore
+we leave biology out to avoid repetition of info
+
+Dummy variable trap 
+  - we don't want to have the same information in our model twice
+  - variable that should have a weight of 1 having a weight of 2
+  
+ice_cream = slope * temperature, slope * avg_temp_fahrenheit + intercept
+
+#R does dummies automatically with "lm" or "glm"
+```{r}
+lm(Sepal.Length ~., iris)
+```
+```{r}
+#how we'd actually make dummies
+grade_dummies <- grades %>% 
+  fastDummies::dummy_cols(
+    select_columns = "subject",
+    remove_first_dummy = TRUE, #to avoid the dummy variable trap
+    remove_selected_columns = TRUE
+  )
+```
+### group low frequency categories
+```{r}
+grades %>% 
+  mutate(subject = if_else(
+    subject %in% c("maths", "physics"), subject, "other"
+    )
+  )
+```
+###binning
+
+sometimes it's useful to group together continuous predictors
+
+```{r}
+length(unique(grades$midterm))
+```
+64 observations are uniwue out of the 99, could categorise to A, B, C etc
+
+>70 = A
+>60 = B
+>50 = C
+
+```{r}
+grades %>% 
+  mutate(letter_grade = case_when(
+    midterm >= 70 ~ "A",
+    midterm >= 60 ~ "B",
+    midterm >= 50 ~ "C",
+    TRUE ~ "F"
+  ))
+#we'd dummy these as well
+```
+###deriving variables
+we call the initial data variables when we load them in: raw variables
+
+any columns we create: derived variables
+  - e.g a useful ratio
+```{r}
+iris %>% 
+  mutate(petal_ratio = Petal.Length / Petal.Width)
+```
+###scaling variables
+models don't care about the units
+
+gdp = 1 * pop(m) + 50
+gdp = 1000 * pop(100k) + 50
+
+so when we get very large values 2000 vs 2. Our model doesn't account for context.
+It only cares about the values
+
+We could standardise (mean 0, sd 1) or normalise (follows norm.dist) values to
+bring them onto a similar scale.
+
+more important for clustering rather than linear regressions
+
+```{r}
+library(ggfortify)
+
+model_baseline <- lm(final ~ ., grades)
+
+autoplot(model_baseline)  
+
+grades_scaled <- grades %>% 
+  mutate(across(where(is.numeric), scale))
+
+model_scaled <- lm(final ~ ., grades_scaled)
+
+autoplot(model_scaled)
+  
+```
+```{r}
+summary(model_baseline)
+```
+final_grade = ... + 0.7 = 0.6*midterm_result
+  #midterm as this is the only statistically significant 
+
+```{r}
+summary(model_scaled)
+```
+final_grade ...+ (-0.4) + 0.6*midterm
+
+>the model hasn't really changed but our interpretaion has
