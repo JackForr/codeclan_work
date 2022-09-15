@@ -1,0 +1,128 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(leaps)
+library(glmulti)
+```
+```{r}
+insurance <- CodeClanData::insurance
+```
+###forward selection
+  
+start with a "null model" 
+  - intercept only
+  
+add predictor based on adj r^2
+
+###backward selection
+
+start with a model with all variables
+
+remove predictors sequentially based on which lowers adj r^2 the least
+
+###best subset selection
+
+find all possible combinations of predictors 
+
+keep one with best adj r^2
+
+###leaps package
+
+-sometimes includes only one level of a categoric variable
+-doesn't handle interactions well
+
+```{r}
+insurance
+```
+```{r}
+regsubsets_forward <- regsubsets(charges ~  ., 
+                                 insurance,
+                                 nvmax = 8,
+                                 method = "forward")
+
+sum_regsubsets_forward <- summary(regsubsets_forward)
+```
+
+```{r}
+sum_regsubsets_forward$which
+```
+
+```{r}
+plot(regsubsets_forward, scale = "adjr2")
+```
+```{r}
+plot(regsubsets_forward, scale = "bic")
+```
+```{r}
+plot(sum_regsubsets_forward$rsq, type = "o")
+plot(sum_regsubsets_forward$bic, type = "o")
+```
+
+> do the same for backwards and exhaustive selectin
+> compare predictors
+> any difference in adjusted r squared?
+
+```{r}
+regsubsets_backwards <- regsubsets(charges ~  ., 
+                                 insurance,
+                                 nvmax = 8,
+                                 method = "backward")
+
+sum_regsubsets_backward <- summary(regsubsets_backwards)
+
+plot(regsubsets_forward, scale = "adjr2")
+
+plot(sum_regsubsets_backward$rsq, type = "o")
+```
+
+```{r}
+regsubsets_exhaustive <- regsubsets(charges ~  ., 
+                                 insurance,
+                                 nvmax = 8,
+                                 method = "backward")
+
+sum_regsubsets_exhaustive <- summary(regsubsets_exhaustive)
+
+plot(regsubsets_exhaustive, scale = "adjr2")
+
+plot(sum_regsubsets_exhaustive$rsq, type = "o")
+```
+```{r}
+summary(regsubsets_exhaustive)$which
+```
+```{r}
+model_without_region <- lm(charges ~ age + bmi + children + smoker,
+                           insurance)
+
+summary(model_without_region)
+```
+```{r}
+model_with_region <- lm(charges ~ age + bmi + children + smoker + region,
+                           insurance)
+
+summary(model_with_region)
+```
+```{r}
+anova(model_without_region, model_with_region)
+```
+
+```{r}
+insurance <- insurance %>% 
+  mutate(location = substr(region, 1, 5))
+
+mod_region_comb <- lm(charges ~ age + bmi + children + smoker + location,
+                      insurance)
+
+summary(mod_region_comb)
+
+anova(model_without_region, mod_region_comb)
+```
+```{r}
+autoplot(model_without_region)
+autoplot(model_with_region)
+autoplot(mod_region_comb)
+```
+
+

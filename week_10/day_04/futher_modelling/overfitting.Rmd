@@ -1,0 +1,181 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(modelr)
+library(caret)
+library(tidyverse)
+library(CodeClanData)
+library(ggfortify)
+```
+```{r}
+savings
+```
+```{r}
+model_overfit <- lm(savings ~ .,
+                    savings)
+
+plot(model_overfit)
+
+summary(model_overfit)
+```
+```{r}
+model_wellfit <- lm(savings ~ salary + age + retired + retired,
+                    savings)
+
+plot(model_wellfit)
+
+summary(model_wellfit)
+```
+```{r}
+model_underfit <- lm(savings ~ salary,
+                     savings)
+
+plot(model_underfit)
+
+summary(model_underfit)
+```
+
+###parsinomy - models should be as simple as possible 
+
+goodness of fit (GoF):
+  - R^2
+  - adjusted R^2
+  
+relative goodness of fit (comparing models):
+  - AIC (Akaike information criterion)
+  - BIC (Baysian information criterion)
+  
+```{r}
+summary(model_overfit)$adj.r.squared
+summary(model_wellfit)$adj.r.squared #wellfit has the best adj r squared
+summary(model_underfit)$adj.r.squared
+
+AIC(model_overfit)
+AIC(model_wellfit) #wellfit has the lowest (best)
+AIC(model_underfit)
+
+BIC(model_overfit)
+BIC(model_wellfit) #wellfit has the lowest (best)
+BIC(model_underfit)
+```
+
+```{r}
+summary(model_overfit)
+broom::glance(model_overfit) #shows important GoF & comparison metrics together
+broom::tidy(model_overfit)
+```
+
+###test train sets
+
+  - split the data (some to test model, rest to train)
+    - use as much data as possible for training (depends on dataset size)
+  - should do this after cleaning and before exploration
+  
+  
+test set used to test model on "unseen data"
+model built on training set
+
+```{r}
+set.seed(9)
+
+n_data <- nrow(savings)
+
+test_index <- sample(1:n_data, size = n_data * 0.2) #20% for test set
+
+test <- slice(savings, test_index) # tests set
+train <- slice(savings, -test_index) # training set
+```
+
+###fit a model to the training set
+```{r}
+model <- lm(savings ~ salary + age + retired,
+            train)
+autoplot(model)
+```
+###test set 
+```{r}
+predictions_test <- test %>% 
+  add_predictions(model) %>%
+  select(savings, pred)
+```
+
+```{r}
+(predictions_test$pred - test$savings)^2
+mse_test <- mean((predictions_test$pred - test$savings)^2) # mean squared error
+
+sqrt(mse_test) # mean error
+```
+
+>task
+
+```{r}
+predictions_train <- train %>% 
+  add_predictions(model) %>%
+  select(savings, pred)
+
+(predictions_train$pred - train$savings)^2
+mse_train <- mean((predictions_train$pred - train$savings)^2) # mean squared error
+
+sqrt(mse_train) # mean error
+```
+mean rooted square error is less - expected as model is built on training data,
+so model fits this better than it does the test data 
+
+###k-fold validation - repeat test and train with different samples
+
+```{r}
+cv_10_fold <- trainControl(method = "cv",
+                           number = 10,
+                           savePredictions = TRUE)
+
+model <- train(savings ~ salary + age + retired,
+               data = savings,
+               trControl = cv_10_fold,
+               method = "lm")
+```
+```{r}
+model$pred
+```
+```{r}
+model$resample
+```
+
+>task
+
+```{r}
+mean(model$resample$Rsquared)
+```
+
+```{r}
+model$pred %>% 
+  group_by(Resample) %>% 
+  summarise(average_error = mean(pred-obs))
+```
+```{r}
+model$resample %>% 
+  group_by(Resample) %>% 
+  summarise(average_rsq = mean(Rsquared))
+```
+###test training and validation sets - alternative to kfold
+
+  1-fit several models with varying hyperparameters (model settings)
+  2- use validation set to choose best ones 
+  3-retrain model on training and validation set 
+  4- then test 
+  
+###avoiding leaks
+
+impute missing values before splitting test and training set means the two 
+data sets are no longer fully independent (info has leaked between)
+
+would need to perform this process indepdnently for each set after splitting
+
+
+
+  
+  
+
+
+
