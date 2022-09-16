@@ -144,20 +144,23 @@ model$resample
 
 >task
 
+for overfitted model
+
 ```{r}
+cv_10_fold <- trainControl(method = "cv", 
+                           number = 10,
+                           savePredictions = TRUE)
+
+model <- train(savings ~ ., # here the . indicates using all variables
+               data = savings,
+               trControl = cv_10_fold,
+               method = "lm")
+
+model$resample
+mean(model$resample$RMSE)
 mean(model$resample$Rsquared)
 ```
 
-```{r}
-model$pred %>% 
-  group_by(Resample) %>% 
-  summarise(average_error = mean(pred-obs))
-```
-```{r}
-model$resample %>% 
-  group_by(Resample) %>% 
-  summarise(average_rsq = mean(Rsquared))
-```
 ###test training and validation sets - alternative to kfold
 
   1-fit several models with varying hyperparameters (model settings)
