@@ -2,18 +2,351 @@
 title: "R Notebook"
 output: html_notebook
 ---
-
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
-
 ```{r}
-plot(cars)
+library(tidyverse)
+library(tidytext)
+library(janeaustenr)
+library(textdata)
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+###NLP: natural language processing
+```{r}
+phrases <- c(
+  "Here is some text.",
+  "Again, more text!",
+  "TEXT is Text?"
+)
+```
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+```{r}
+example_text <- tibble(phrase = phrases,
+       id = 1:3)
+```
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+###capitalisation and punctuation
+
+```{r}
+word_df <- example_text %>% 
+  unnest_tokens(word, phrase, to_lower = FALSE)
+
+word_df %>% 
+  count(word, sort = TRUE)
+```
+>task
+
+```{r}
+lines <- 
+c(
+  "Whose woods these are I think I know.",
+  "His house is in the village though;", 
+  "He will not see me stopping here",
+  "To watch his woods fill up with snow."
+)
+
+lines <- tibble(phrase = lines,
+       id = 1:4)
+
+lines_df <- lines %>% 
+  unnest_tokens(word, phrase)
+
+lines_df %>% 
+  count(word, sort = TRUE) %>% 
+  filter(n > 1) #all words repeated
+```
+
+###stop words
+
+```{r}
+library(janeaustenr)
+```
+
+```{r}
+length(prideprejudice)
+head(prideprejudice, 20)
+```
+
+```{r}
+pride_book <- tibble(
+  id = 1:length(prideprejudice),
+  text = prideprejudice) %>% 
+  unnest_tokens(word, text, token = "words")
+```
+```{r}
+pride_book %>% 
+  count(word, sort = TRUE)
+```
+```{r}
+stop_words
+```
+```{r}
+pride_book %>% #removing stop words
+  anti_join(stop_words) %>% 
+  count(word, sort = TRUE)
+```
+
+```{r}
+stop_words %>% 
+  count(lexicon, sort = TRUE)
+
+stop_words %>% 
+  filter(lexicon == "snowball")
+```
+```{r}
+pride_book %>% 
+  anti_join(filter(stop_words, lexicon == "snowball")) %>% 
+  count(word, sort = TRUE)
+```
+
+>task: do the same for sense and sensibility
+
+```{r}
+sense_book <- tibble(
+  id = 1:length(sensesensibility),
+  text = sensesensibility) %>% 
+  unnest_tokens(word, text, token = "words")
+
+sense_book %>% #removing stop words
+  anti_join(stop_words) %>% 
+  count(word, sort = TRUE)
+```
+
+###TF-IDF and n-grams
+
+T-IDF: term-frequency -- inverse-document-frequency
+
+```{r}
+sentences <- c(
+  "This is a sentence about cats.",
+  "This is a sentence about dogs.",
+  "This is a sentence about alligators."
+)
+```
+
+```{r}
+sentences_df <- tibble(
+  sentence = sentences,
+  id = 1:3
+) %>% 
+  unnest_tokens(word, sentence)
+```
+```{r}
+count(sentences_df, word, id)
+```
+### tf-idf
+
+```{r}
+sentences_df %>% 
+  count(word, id) %>% 
+  bind_tf_idf(term = word, document = id, n = n)
+```
+the tf-idf is highest with words that are unique to one sentence
+
+```{r}
+titles <- c("Pride and Prejudice", "Sense and Sensibility", "Emma", "Persuasion", "Mansfield Park", "Northanger Abbey")
+
+books <- list(prideprejudice, sensesensibility, emma, persuasion, mansfieldpark,  northangerabbey) #multiple books
+```
+
+```{r}
+books[[1]] %>% 
+  head(20)
+
+str(books)
+
+
+books <- purrr::map_chr(books, paste, collapse = " ") #pasting all books together
+
+str(books)
+```
+
+```{r}
+all_books_df <- tibble(
+  title = titles, 
+  text = books
+) %>% 
+  unnest_tokens(word, text)
+```
+```{r}
+all_books_df_idf <- all_books_df %>% 
+  count(word, title) %>% 
+  bind_tf_idf(word, title, n) %>% 
+  arrange(desc(tf_idf))
+```
+
+```{r}
+all_books_df_idf %>% 
+  group_by(title) %>% 
+  slice_max(tf_idf, n =5)
+```
+###n-grams
+
+```{r}
+phrases <- c(
+  "here is some text",
+  "again more text",
+  "text is text"
+)
+
+phrases_df <- tibble(
+  phrase = phrases,
+  id     = 1:3
+) %>% 
+  unnest_tokens(trigram, phrase, token = "ngrams", n = 3)
+```
+>task: popular bigrams and trigrams for pride and prej
+
+```{r}
+pride_trigram <- tibble(
+  id = 1:length(prideprejudice),
+  text = prideprejudice
+) %>% 
+  unnest_tokens(trigram, text, token = "ngrams", n = 3) %>% 
+  count(trigram) %>% 
+  arrange(desc(n))
+
+pride_bigram <- tibble(
+  id = 1:length(prideprejudice),
+  text = prideprejudice
+) %>% 
+  unnest_tokens(bigram, text, token = "ngrams", n = 2) %>% 
+  count(bigram) %>% 
+  arrange(desc(n))
+
+book_df <- tibble(
+  id = 1:length(prideprejudice),
+  text = prideprejudice
+)
+```
+
+###separate 
+```{r}
+book_bigrams <- book_df %>% 
+  unnest_tokens(bigram, text, token = "ngrams", n = 2) %>% 
+  count(bigram, sort = TRUE) %>% 
+  separate(bigram, c("word1", "word2"), sep = " ") %>% 
+  anti_join(stop_words, by = c("word1" = "word")) %>% 
+  anti_join(stop_words, by = c("word2" = "word"))
+
+book_bigrams %>% 
+  unite(bigram, word1, word2, remove = FALSE, sep = " ")
+```
+
+>task: most common bigrams in emma
+
+```{r}
+emma_df <- tibble(
+  id = 1:length(emma),
+  text = emma
+)
+
+emma_bigram <- tibble(
+  id = 1:length(emma),
+  text = emma
+) %>% 
+  unnest_tokens(bigram, text, token = "ngrams", n = 3) %>% 
+  count(bigram) %>% 
+  arrange(desc(n))
+```
+
+###sentiment analysis 
+```{r}
+library(textdata)
+```
+```{r}
+get_sentiments("afinn")
+
+get_sentiments("bing") %>% 
+  count(sentiment)
+
+get_sentiments("loughran") %>% 
+  count(sentiment)
+
+get_sentiments("nrc") %>% 
+count(sentiment)
+```
+
+```{r}
+book_pride <- tibble(
+  text = prideprejudice,
+  sentence = 1:length(prideprejudice)
+) %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words)
+```
+
+```{r}
+book_pride %>% 
+  left_join(get_sentiments("bing")) #join pos and neg sentiments
+```
+
+```{r}
+book_pride %>% 
+  inner_join(get_sentiments("bing")) #only words with sentiments
+```
+
+```{r}
+bing <- get_sentiments("bing")
+
+book_sentiments <- book_pride %>% 
+  inner_join(bing)
+
+book_sentiments %>% 
+  filter(sentiment == "positive") %>% 
+  count(word, sort = TRUE)
+
+book_sentiments %>% 
+  filter(sentiment == "negative") %>% 
+  count(word, sort = TRUE)
+```
+>task: most common pos neg and neutral words in emma
+
+```{r}
+loughran <- get_sentiments("loughran")
+
+book_emma <- tibble(
+  text = emma,
+  sentence = 1:length(emma)
+) %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words)
+
+emma_sentiments <- book_emma %>% 
+  inner_join(loughran)
+
+emma_sentiments %>% 
+  filter(sentiment == "positive") %>% 
+  count(word, sort = TRUE)
+
+emma_sentiments %>% 
+  filter(sentiment == "negative") %>% 
+  count(word, sort = TRUE)
+
+unique(loughran$sentiment)
+
+emma_sentiments %>% 
+  filter(sentiment != "positive" & 
+           sentiment != "negative" ) %>% 
+  count(word, sort = TRUE)
+```
+
+###average sentiment per sentence 
+
+```{r}
+afinn <- get_sentiments("afinn")
+
+book_sentiments <- book_pride %>% 
+  inner_join(afinn)
+```
+
+```{r}
+sentence_sentiment <- book_sentiments %>% 
+  group_by(sentence) %>% 
+  summarise(mean_sentiment = mean(value))
+```
+
+```{r}
+ggplot(sentence_sentiment, aes(sentence, mean_sentiment))+
+  geom_point(alpha = 0.1)+
+  geom_smooth()
+```
 
