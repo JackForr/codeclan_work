@@ -1,0 +1,55 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+###logistic regression
+
+###main ideas
+
+```{r}
+library(tidyverse)
+```
+```{r}
+logistic_model <- glm(pass ~ time_spent_studying, family = binomial(), student_results)
+
+student_results <- tibble(
+  time_spent_studying = c(1.5, 1, 2.2, 1.2, 4.6, 5.0, 2.6, 2.5, 4, 3.2, 0.5, 0.8, 1.8, 4.5, 3.8, 2.8, 4.2, 3, 3.5, 0.2),
+  pass = c(FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE)
+)
+
+ggplot(student_results, aes(time_spent_studying, pass)) +
+  geom_point()
+```
+linear regression doesn't work as it goes beyond scale of 0-1 (pass - fail), therefore will always have a high standard error
+
+what we want:
+  -predict between 0 & 1
+
+```{r}
+mortgage_data <- read_csv("data/mortgage_applications.csv") %>% 
+  janitor::clean_names()
+```
+```{r}
+logit <- function(x){ #function for log of odds
+  return(log(x / (1-x)))
+}
+
+logit_data <- tibble(p = seq(0.001, 0.999, 0.001)) %>% 
+  mutate(logit_p = logit(p))
+
+head(logit_data)
+```
+```{r}
+logit_data %>% 
+  ggplot(aes(x = logit_p,
+             y = p))+
+  geom_line()+
+  labs(x = "logit(p) value",
+       y = "probability")
+```
+
+
+
+
+
+

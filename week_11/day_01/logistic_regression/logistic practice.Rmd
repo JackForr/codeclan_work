@@ -1,0 +1,180 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+mortgage_data_logreg_model <- glm(accepted ~ tu_score,
+                                  data = mortgage_data,
+                                  family = binomial(link = "logit"))
+
+summary(mortgage_data_logreg_model)
+```
+probability of acceptance = 1/ 1 + e^(-4.6+0.01*tu_score)
+
+as tu_score increases by 1, probability increases the log odds by 0.008
+
+```{r}
+library(modelr)
+
+#0-710 tu_scores
+#map a prediction of acceptance for each credit score
+
+log_predictions <- tibble(
+  tu_score = seq(0, 710, 1)) %>% 
+  add_predictions(mortgage_data_logreg_model,
+                  type = "response")
+
+ggplot(mortgage_data)+
+  geom_jitter(aes(x = tu_score,
+                  y = as.numeric(accepted)), alpha = 0.5, height = 0.1, wodth = 0.1)+
+  geom_line(data = log_predictions, aes(x = tu_score, y = pred), col = "red")+
+  labs(y  = "estimated probability accepted")
+
+#can use our preicitons by filtering prediciton table 
+log_predictions %>% 
+  filter(tu_score == 600)
+```
+how do our odds of getting accpeted change as we increase tu_score?
+
+base on:
+  - baseline odds (tu_score = 594)
+  - odds above baseline (tu_score = 594 + 50)
+  
+```{r}
+odds_change <- function(b1, change){
+  exp(b1 * change)
+}
+
+odds_change(0.008475, 50)
+```
+
+a 50 unit increase in tu_score leads to odds increasing by a factor of 1.53
+
+###categorical predictors
+```{r}
+mortgage_model_2_terms <- 
+  glm(accepted ~ tu_score + employed,
+      family = binomial(link = "logit"),
+      data = mortgage_data)
+```
+
+ln(oddsaccepted) = b0 = b1 * 0.006724 + 1.484538 * employedTrue
+
+```{r}
+log_predictions <- tibble(
+  tu_score = rep(seq(0, 710, 1), 2),
+  employed = c(rep(TRUE, 711), rep(FALSE, 711))
+) %>% 
+  add_predictions(model = mortgage_model_2_terms, type = "response")
+
+ggplot(mortgage_data) +
+  geom_jitter(aes(x = tu_score, y = as.numeric(accepted)), alpha = 0.5, height = 0.1, width = 0.1) +
+  geom_line(data = log_predictions, aes(x = tu_score, y = pred, colour = employed)) +
+  labs(y = "Estimated p(Accepted)")
+
+# can use our predictions by filtering our prediction table
+log_predictions %>% 
+  filter(tu_score == 600)
+```
+odds(employedTrue) / odds(employedFalse) = odds ratio
+
+```{r}
+odds_change(1.48, 1)
+```
+
+on average a customers odds of being accepted are 4.39x higher if they're employed
+
+###model performance: building a binary classifier
+
+i.e. assigns a class based on this predicted probability
+
+if applicant's credit score is x and their employment is y, will we accpet them for a mortgage loan?
+
+the probability level which we assign yes or no is called the threshold 
+
+```{r}
+mortgage_preds_2_terms <- mortgage_data %>% 
+  add_predictions(mortgage_model_2_terms, type = "response") %>% 
+  mutate(predicted_accepted = pred >= 0.6) #binary classifier
+```
+###model assessment - how often were we right (accepted = predicted_accepted)
+
+confusion tool assessment matrix 
+
+```{r}
+library(janitor)
+mortgage_preds_2_terms %>% 
+  tabyl(accepted, predicted_accepted)
+```
+
+>task
+
+```{r}
+mortgage_3pred_model <- #creating 3 predictor model
+  glm(accepted ~ tu_score + employed + age,
+      family = binomial(link = "logit"),
+      data = mortgage_data)
+
+mortgage_data_with_3_pred <- mortgage_data %>% 
+  add_predictions(mortgage_3pred_model) %>% 
+  mutate(predicted_accepted = pred >= 0.6)
+
+conf_mat <- mortgage_data_with_3_pred %>% 
+  tabyl(accepted, predicted_accepted) %>% 
+  adorn_title()
+```
+FALSE:FALSE & TRUE:TRUE are where your model is right
+
+FALSE:TRUE & TRUE:FALSE are where your model is wrong 
+
+True negative (701) | False positive (27)
+False negative (102)| True negative (170)
+
+>task
+
+```{r}
+mortgage_data_with_3_pred %>% 
+  filter(tu_score == 594)
+
+#false positive
+#false positive
+#true positive 
+#true positive
+#true positive
+```
+
+#single value for accuracy?
+
+Accuracy: number of true pos. + number of true neg. / total
+  - times we were right / total outcomes 
+  
+```{r}
+(701+170) / 1000
+```
+we were right 87.1% of the time 
+
+unfortunately accuracy doesn't react well to unbalanced data: so we use other measures:
+  - rates (true positive rate, specificity, ...)
+  - AUC
+  - Gini 
+  
+```{r}
+conf_mat
+
+nTN = 701
+nFP = 27
+nFN = 102
+nTP = 170
+
+true_positive_rate = nTP / (nTP + nFN)
+
+true_negative_rate = nTN / (nTN + nFP)
+
+false_positive_rate = nFP / (nFP + nTN)
+
+false_negative_rate = nFN / (nFN + nTP)
+```
+which to prioritise depends on the context 
+
+

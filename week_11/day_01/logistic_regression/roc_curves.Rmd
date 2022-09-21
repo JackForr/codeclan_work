@@ -1,0 +1,136 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(janitor)
+library(modelr)
+```
+
+```{r}
+mortgage_data <- read_csv("data/mortgage_applications.csv") %>% 
+  clean_names()
+
+mortgage_glm <- glm(accepted ~ tu_score + employed + age, #built logistic model
+                    family = binomial(link = "logit"),
+                    data = mortgage_data)
+
+mortgage_data_pred <- mortgage_data %>% #use model as a binary classifier
+  add_predictions(mortgage_glm, type = "response")
+
+head(mortgage_data_pred)
+```
+
+###ROC curves visualise the effectiveness of our classifier
+```{r}
+library(pROC)
+
+roc_obj_3_terms <- mortgage_data_pred %>% 
+  roc(response = accepted, predictor = pred)
+
+ggroc(data = roc_obj_3_terms, legacy.axes = TRUE)+
+  labs(x = "False positive rate",
+       y = "True positive rate")
+```
+bottom left represents high threshold i.e. you need 99% to be accepted, as we decrease the threshold the rate of false positives incraeses (right side)
+
+```{r}
+tibble(threshold = roc_obj_3_terms$thresholds,
+       true_positive_rate = roc_obj_3_terms$sensitivities,
+       false_positive_rate = roc_obj_3_terms$specificities) #shows rate for each threshold
+```
+>task: make a one predictor model and compare ggroc with 3 pred
+
+```{r}
+mortgage_1pred_model <- glm(accepted ~ tu_score,
+                            family = binomial(link = "logit"),
+                    data = mortgage_data)
+
+mortgage_data_1pred <- mortgage_data %>% #use model as a binary classifier
+  add_predictions(mortgage_1pred_model, type = "response")
+
+roc_obj_1pred <- mortgage_data_1pred %>% 
+  roc(response = accepted, predictor = pred)
+
+ggroc(data = list(three_terms=roc_obj_3_terms, one_term=roc_obj_1pred), legacy.axes = TRUE)+
+  labs(x = "False positive rate",
+       y = "True positive rate")
+```
+3 terms is better, but how good??
+
+###measures of model
+
+  -AUC (area under curve)
+    maximise this for a good model, between 0 & 1
+    
+```{r}
+auc(roc_obj_3_terms)
+auc(roc_obj_1pred)
+```
+reaffirs that model 3 is better based on this single number value 
+
+  -Gini (2*AUC - 1)
+    higher is better, between -1 & 1, negative is worse than a random guess
+
+```{r}
+gini3 = 2 * auc(roc_obj_3_terms) - 1
+gini1 = 2 * auc(roc_obj_1pred) - 1
+```
+
+###cross validation 
+  - splitting data before building a model into test and train 
+  
+5fold cross validation (Kfold)
+  -split our data into 1/5ths, with each fifth as testing and 4/5ths training
+  
+```{r}
+library(caret)
+```
+```{r}
+#caret needs factor data instead of logical
+mortgage_data <- mortgage_data %>%
+  mutate(employed = as_factor(if_else(employed, "t", "f")),
+         accepted = as_factor(if_else(accepted, "t", "f")),
+         employed = relevel(employed, ref = "f"),
+         accepted = relevel(accepted, ref = "f")) 
+```
+
+```{r}
+train_control <- trainControl(
+  method = "repeatedcv",
+  number = 5,
+  repeats = 100,
+  savePredictions = TRUE,
+  classProbs = TRUE, #retain performnace stats for bianry classifier (AUC etc)
+  summaryFunction = twoClassSummary
+)
+```
+
+```{r}
+#traine each fold using 3 term model
+val_model <- train(
+  accepted ~ tu_score + employed + age,
+  family = binomial(link = "logit"),
+  method = "glm",
+  data = mortgage_data,
+  trControl = train_control
+)
+```
+```{r}
+summary(val_model)
+```
+
+```{r}
+val_model$results
+```
+sens = sensitivity (TPR)
+spec = specificity (FPR)
+ROC = area under roc curve (AUC)
+
+0.886 AUC 
+
+
+    
+  
+  
