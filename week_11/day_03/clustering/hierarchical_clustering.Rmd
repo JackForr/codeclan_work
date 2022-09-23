@@ -1,0 +1,95 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(cluster)
+library(factoextra)
+library(dendextend)
+library(corrplot)
+```
+
+```{r}
+edu_data <- read.csv("data/school_data.csv")
+skimr::skim(edu_data)
+head(edu_data)
+```
+```{r}
+edu_data <- edu_data %>% 
+  column_to_rownames("X1") #removing character variables for clustering
+
+head(edu_data)
+```
+
+```{r}
+edu_data %>% 
+  skimr::skim() # no missing values
+```
+
+###rescale numerics to be standard normal, so units don't effect distance measure
+```{r}
+edu_data_scaled <- edu_data %>% 
+  mutate(across(.fns = scale))
+
+skimr::skim(edu_data_scaled) # mean of (0ish) and standard dev of 1 i.e. scaled
+```
+
+#checking correlations
+```{r}
+edu_data_scaled %>% 
+  cor() %>% 
+  corrplot(method = "number", type = "lower")
+```
+
+###calculate distance between points (dissimilarity matrix)
+```{r}
+diss_matrix <- edu_data_scaled %>% 
+  select(home_school) %>% 
+  dist(method = "euclidian")
+```
+
+```{r}
+fviz_dist(diss_matrix) #visualise dissimilarity matrix
+#red - similar, blue - dissimilar
+```
+
+###create dendogram (hierarchical clustering)
+```{r}
+clusters <- diss_matrix %>% 
+  hclust(method = "complete")
+```
+
+```{r}
+clusters %>% 
+  plot(cex = 0.5,
+       hang = -5)
+```
+
+```{r}
+alt_clusters <- diss_matrix %>% 
+  hclust(method = "ward.D2")
+```
+
+```{r}
+clustering_dendogram <- clusters %>% 
+  as.dendrogram() %>% 
+  set("labels_cex", 0.5)
+```
+
+```{r}
+alt_clustering_dendogram <- alt_clusters %>% 
+  as.dendrogram() %>% 
+  set("labels_cex", 0.5)
+```
+
+```{r}
+dend_diff(clustering_dendogram,
+          alt_clustering_dendogram) #comparing dendograms with different clustering methods
+```
+###choosing no. of groups
+```{r}
+plot(clusters, cex = 0.6, hang = -1)
+rect.hclust(clusters, k = 2, border = 2:5) #k = 2 groups
+```
+

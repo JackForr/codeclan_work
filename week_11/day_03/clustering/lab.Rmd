@@ -1,0 +1,95 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(CodeClanData)
+
+students_big <- students_big %>% 
+  select(starts_with("importance")) #selecting varaibles to study
+```
+
+```{r}
+students_big <- students_big %>% 
+  mutate(across(.fns = scale)) #scaling
+
+skimr::skim(students_big)
+```
+
+```{r}
+max_k <- 20 #no. of clusters to go up to
+
+k_clusters <- tibble(k = 1:max_k) %>% 
+  mutate(
+    kclust = map(k, ~ kmeans(students_big, .x, nstart = 25)),
+    tidied = map(kclust, tidy),
+    glanced = map(kclust, glance),
+    augmented = map(kclust, augment, students_big) #tibble of tibbles with cluster info for each number of k
+  )
+```
+
+```{r}
+clusterings <- k_clusters %>% 
+  unnest(glanced) #lookign at the 20 levels of clusterings
+```
+###choose K
+
+```{r}
+clusterings %>% 
+  ggplot(aes(x = k,
+             y = tot.withinss))+
+  geom_point()+
+  geom_line()+
+  scale_x_continuous(breaks = seq(1, 20, 1))
+```
+```{r}
+fviz_nbclust(students_big,
+             kmeans,
+             method = "silhouette",
+             nstart = 25)
+```
+```{r}
+fviz_nbclust(students_big,
+             kmeans,
+             method = "gap_stat",
+             nstart = 25)
+```
+different methods yield different suggested cluster numbers, suggetsing that 
+this data is not well suite to clustering
+
+###b
+```{r}
+students_env <- students_big %>% 
+  select(1:4)
+
+clustered_env <- students_env %>% 
+  kmeans(centers = 2,
+         nstart = 25)
+
+tidy(clustered_env, 
+     col.names = colnames(students_env))
+clusterings <- augment(clustered_env, students_env)
+```
+
+```{r}
+library(GGally)
+
+clusterings %>% 
+ggplot(aes(x = importance_conserving_water,
+           y = importance_saving_enery))+
+  geom_point(aes(colour = .cluster))
+
+clusterings %>% 
+ggplot(aes(x = importance_recycling_rubbish,
+           y = importance_saving_enery))+
+  geom_point(aes(colour = .cluster))
+
+clusterings %>% 
+ggplot(aes(x = importance_reducing_pollution,
+           y = importance_saving_enery))+
+  geom_point(aes(colour = .cluster))
+
+clusterings %>% 
+  ggpairs(aes(colour = .cluster))
+```
+group 2 are more environmentally conscious
